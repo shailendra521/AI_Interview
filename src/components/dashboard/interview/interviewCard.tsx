@@ -3,12 +3,13 @@ import Image from "next/image";
 import { Card, CardContent, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import { Copy, ArrowUpRight } from "lucide-react";
+import { Copy, ArrowUpRight, Mail } from "lucide-react";
 import { CopyCheck } from "lucide-react";
 import { ResponseService } from "@/services/responses.service";
 import axios from "axios";
 import MiniLoader from "@/components/loaders/mini-loader/miniLoader";
 import { InterviewerService } from "@/services/interviewers.service";
+import EmailPopup from "./emailPopup";
 
 interface Props {
   name: string | null;
@@ -25,6 +26,7 @@ function InterviewCard({ name, interviewerId, id, url, readableSlug }: Props) {
   const [responseCount, setResponseCount] = useState<number | null>(null);
   const [isFetching, setIsFetching] = useState(false);
   const [img, setImg] = useState("");
+  const [isEmailPopupOpen, setIsEmailPopupOpen] = useState(false);
 
   useEffect(() => {
     const fetchInterviewer = async () => {
@@ -106,68 +108,93 @@ function InterviewCard({ name, interviewerId, id, url, readableSlug }: Props) {
     window.open(interviewUrl, "_blank");
   };
 
+  const handleEmailClick = (event: React.MouseEvent) => {
+    event.stopPropagation();
+    event.preventDefault();
+    setIsEmailPopupOpen(true);
+  };
+
+  const interviewUrl = readableSlug
+    ? `${base_url}/call/${readableSlug}`
+    : `${base_url}/call/${url}`;
+
   return (
-    <a
-      href={`/interviews/${id}`}
-      style={{
-        pointerEvents: isFetching ? "none" : "auto",
-        cursor: isFetching ? "default" : "pointer",
-      }}
-    >
-      <Card className="relative p-0 mt-4 inline-block cursor-pointer h-60 w-56 ml-1 mr-3 rounded-xl shrink-0 overflow-hidden shadow-md">
-        <CardContent className={`p-0 ${isFetching ? "opacity-60" : ""}`}>
-          <div className="w-full h-40 overflow-hidden bg-indigo-600 flex items-center text-center">
-            <CardTitle className="w-full mt-3 mx-2 text-white text-lg">
-              {name}
-              {isFetching && (
-                <div className="z-100 mt-[-5px]">
-                  <MiniLoader />
-                </div>
-              )}
-            </CardTitle>
-          </div>
-          <div className="flex flex-row items-center mx-4 ">
-            <div className="w-full overflow-hidden">
-              <Image
-                src={img}
-                alt="Picture of the interviewer"
-                width={70}
-                height={70}
-                className="object-cover object-center"
-              />
+    <>
+      <a
+        href={`/interviews/${id}`}
+        style={{
+          pointerEvents: isFetching ? "none" : "auto",
+          cursor: isFetching ? "default" : "pointer",
+        }}
+      >
+        <Card className="relative p-0 mt-4 inline-block cursor-pointer h-60 w-56 ml-1 mr-3 rounded-xl shrink-0 overflow-hidden shadow-md">
+          <CardContent className={`p-0 ${isFetching ? "opacity-60" : ""}`}>
+            <div className="w-full h-40 overflow-hidden bg-indigo-600 flex items-center text-center">
+              <CardTitle className="w-full mt-3 mx-2 text-white text-lg">
+                {name}
+                {isFetching && (
+                  <div className="z-100 mt-[-5px]">
+                    <MiniLoader />
+                  </div>
+                )}
+              </CardTitle>
             </div>
-            <div className="text-black text-sm font-semibold mt-2 mr-2 whitespace-nowrap">
-              Responses:{" "}
-              <span className="font-normal">
-                {responseCount?.toString() || 0}
-              </span>
+            <div className="flex flex-row items-center mx-4 ">
+              <div className="w-full overflow-hidden">
+                <Image
+                  src={img}
+                  alt="Picture of the interviewer"
+                  width={70}
+                  height={70}
+                  className="object-cover object-center"
+                />
+              </div>
+              <div className="text-black text-sm font-semibold mt-2 mr-2 whitespace-nowrap">
+                Responses:{" "}
+                <span className="font-normal">
+                  {responseCount?.toString() || 0}
+                </span>
+              </div>
             </div>
-          </div>
-          <div className="absolute top-2 right-2 flex gap-1">
-            <Button
-              className="text-xs text-indigo-600 px-1 h-6"
-              variant={"secondary"}
-              onClick={handleJumpToInterview}
-            >
-              <ArrowUpRight size={16} />
-            </Button>
-            <Button
-              className={`text-xs text-indigo-600 px-1 h-6  ${
-                copied ? "bg-indigo-300 text-white" : ""
-              }`}
-              variant={"secondary"}
-              onClick={(event) => {
-                event.stopPropagation();
-                event.preventDefault();
-                copyToClipboard();
-              }}
-            >
-              {copied ? <CopyCheck size={16} /> : <Copy size={16} />}
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
-    </a>
+            <div className="absolute top-2 right-2 flex gap-1">
+              <Button
+                className="text-xs text-indigo-600 px-1 h-6"
+                variant={"secondary"}
+                onClick={handleEmailClick}
+              >
+                <Mail size={16} />
+              </Button>
+              <Button
+                className="text-xs text-indigo-600 px-1 h-6"
+                variant={"secondary"}
+                onClick={handleJumpToInterview}
+              >
+                <ArrowUpRight size={16} />
+              </Button>
+              <Button
+                className={`text-xs text-indigo-600 px-1 h-6  ${
+                  copied ? "bg-indigo-300 text-white" : ""
+                }`}
+                variant={"secondary"}
+                onClick={(event) => {
+                  event.stopPropagation();
+                  event.preventDefault();
+                  copyToClipboard();
+                }}
+              >
+                {copied ? <CopyCheck size={16} /> : <Copy size={16} />}
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      </a>
+      
+      <EmailPopup 
+        open={isEmailPopupOpen}
+        onClose={() => setIsEmailPopupOpen(false)}
+        shareUrl={interviewUrl}
+      />
+    </>
   );
 }
 
