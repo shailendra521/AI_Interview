@@ -1,37 +1,48 @@
 import { useState } from "react";
 import Image from "next/image";
-import { Card, CardContent, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardTitle, CardDescription } from "@/components/ui/card";
 import Modal from "@/components/dashboard/Modal";
 import { Interviewer } from "@/types/interviewer";
 import InterviewerDetailsModal from "@/components/dashboard/interviewer/interviewerDetailsModal";
+import { User, MessageSquare } from "lucide-react";
 
 interface Props {
   interviewer: Interviewer;
 }
 
 const interviewerCard = ({ interviewer }: Props) => {
-  // eslint-disable-next-line react-hooks/rules-of-hooks
   const [open, setOpen] = useState(false);
 
   return (
     <>
-      <Card
-        className="p-0 inline-block cursor-pointer hover:scale-105 ease-in-out duration-300 h-40 w-36 ml-1 mr-3 rounded-xl shrink-0 overflow-hidden shadow-md"
+      <Card 
+        className="overflow-hidden cursor-pointer hover:border-primary hover:shadow-md transition-all duration-300 h-full w-full"
         onClick={() => setOpen(true)}
+        hover
+        shadowed
       >
-        <CardContent className="p-0">
-          <div className="w-full h-28 overflow-hidden">
+        <div className="aspect-[4/3] w-full relative bg-slate-100">
+          {interviewer.image ? (
             <Image
               src={interviewer.image}
-              alt="Picture of the interviewer"
-              width={200}
-              height={40}
-              className="w-full h-full object-cover object-center"
+              alt={`${interviewer.name}`}
+              fill
+              className="object-cover object-center"
             />
-          </div>
-          <CardTitle className="mt-3 text-base text-center">
+          ) : (
+            <div className="w-full h-full flex items-center justify-center">
+              <User className="w-16 h-16 text-slate-300" />
+            </div>
+          )}
+        </div>
+        <CardContent className="p-4 flex flex-col items-center space-y-1">
+          <CardTitle className="text-lg text-center line-clamp-1" title={interviewer.name}>
             {interviewer.name}
           </CardTitle>
+          <CardDescription className="text-center flex items-center justify-center gap-1">
+            <MessageSquare className="h-3 w-3" />
+            <span>View details</span>
+          </CardDescription>
         </CardContent>
       </Card>
       <Modal
