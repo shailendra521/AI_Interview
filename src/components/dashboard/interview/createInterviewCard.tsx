@@ -12,18 +12,23 @@ function CreateInterviewCard() {
   return (
     <>
       <Card
-        className=" flex items-center border-dashed border-gray-700 border-2 cursor-pointer hover:scale-105 ease-in-out duration-300 h-60 w-56 ml-1 mr-3 mt-4 rounded-xl shrink-0 overflow-hidden shadow-md"
+        hover
+        gradient
+        className="flex items-center border-dashed border-slate-300 border cursor-pointer transition-all duration-300 ease-in-out h-64 w-64 rounded-xl shrink-0 overflow-hidden"
         onClick={() => {
           setOpen(true);
         }}
       >
-        <CardContent className="flex items-center flex-col mx-auto">
-          <div className="flex flex-col justify-center items-center w-full overflow-hidden">
-            <Plus size={90} strokeWidth={0.5} className="text-gray-700" />
+        <CardContent className="flex items-center flex-col justify-center mx-auto p-6 text-center">
+          <div className="flex flex-col justify-center items-center w-full mb-3">
+            <div className="bg-blue-50 rounded-full p-4 mb-3">
+              <Plus size={36} strokeWidth={1.5} className="text-primary" />
+            </div>
           </div>
-          <CardTitle className="p-0 text-md text-center">
+          <CardTitle className="text-slate-800 text-lg mb-2">
             Create an Interview
           </CardTitle>
+          <p className="text-sm text-slate-500">Set up a new interview experience</p>
         </CardContent>
       </Card>
       <Modal

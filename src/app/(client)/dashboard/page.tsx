@@ -10,7 +10,7 @@ import { ClientService } from "@/services/clients.service";
 import { ResponseService } from "@/services/responses.service";
 import { useInterviews } from "@/contexts/interviews.context";
 import Modal from "@/components/dashboard/Modal";
-import { Gem, Plus } from "lucide-react";
+import { ChevronRight, Gem, Plus, BarChart3 } from "lucide-react";
 import Image from "next/image";
 
 function Interviews() {
@@ -24,13 +24,11 @@ function Interviews() {
 
   function InterviewsLoader() {
     return (
-      <>
-        <div className="flex flex-row">
-          <div className="h-60 w-56 ml-1 mr-3 mt-3 flex-none animate-pulse rounded-xl bg-gray-300" />
-          <div className="h-60 w-56 ml-1 mr-3  mt-3 flex-none animate-pulse rounded-xl bg-gray-300" />
-          <div className="h-60 w-56 ml-1 mr-3 mt-3 flex-none animate-pulse rounded-xl bg-gray-300" />
-        </div>
-      </>
+      <div className="flex flex-row flex-wrap gap-4">
+        {[1, 2, 3].map((index) => (
+          <div key={index} className="w-64 h-64 rounded-xl bg-slate-100 animate-pulse shadow-sm" />
+        ))}
+      </div>
     );
   }
 
@@ -89,83 +87,50 @@ function Interviews() {
   }, [organization, currentPlan, allowedResponsesCount]);
 
   return (
-    <main className="p-8 pt-0 ml-12 mr-auto rounded-md">
-      <div className="flex flex-col items-left">
-        <h2 className="mr-2 text-2xl font-semibold tracking-tight mt-8">
-          My Interviews
-        </h2>
-        <h3 className=" text-sm tracking-tight text-gray-600 font-medium ">
-          Start getting responses now!
-        </h3>
-        <div className="relative flex items-center mt-1 flex-wrap">
+    <>
+      <div className="flex justify-between items-center mb-6">
+        <div>
+          <h1 className="text-2xl font-bold text-slate-800">My Interviews</h1>
+          <p className="text-slate-500 mt-1">Create and manage your interview experiences</p>
+        </div>
+        <div className="flex items-center gap-3">
+          <Card className="px-4 py-3 flex items-center gap-2 border-slate-200 shadow-sm">
+            <BarChart3 className="text-primary w-5 h-5" />
+            <div>
+              <p className="text-sm font-medium text-slate-600">Total Interviews</p>
+              <p className="text-xl font-bold text-slate-800">{interviews.length}</p>
+            </div>
+          </Card>
+        </div>
+      </div>
+
+      <div className="bg-white rounded-xl p-6 border border-slate-200 shadow-sm mb-8">
+        <div className="flex justify-between items-center mb-4">
+          <h2 className="text-lg font-semibold text-slate-800">Recent Interviews</h2>
+          <button className="text-primary text-sm font-medium flex items-center hover:text-primary/80 transition-colors">
+            View All <ChevronRight className="w-4 h-4 ml-1" />
+          </button>
+        </div>
+        
+        <div className="relative flex flex-wrap gap-4">
           {currentPlan == "free_trial_over" ? (
-            <Card className=" flex bg-gray-200 items-center border-dashed border-gray-700 border-2 hover:scale-105 ease-in-out duration-300 h-60 w-56 ml-1 mr-3 mt-4 rounded-xl shrink-0 overflow-hidden shadow-md">
-              <CardContent className="flex items-center flex-col mx-auto">
-                <div className="flex flex-col justify-center items-center w-full overflow-hidden">
-                  <Plus size={90} strokeWidth={0.5} className="text-gray-700" />
+            <Card className="flex bg-gradient-to-br from-slate-50 to-slate-100 items-center border-dashed border-slate-300 border hover:shadow-md transition-all duration-300 ease-in-out h-64 w-64 rounded-xl shrink-0 overflow-hidden hover-lift">
+              <CardContent className="flex items-center flex-col mx-auto p-6">
+                <div className="flex flex-col justify-center items-center w-full mb-4">
+                  <Plus size={64} strokeWidth={1} className="text-slate-400" />
                 </div>
-                <CardTitle className="p-0 text-md text-center">
-                  You cannot create any more interviews unless you upgrade
-                </CardTitle>
+                <CardTitle className="text-center text-slate-700 mb-2">Upgrade Required</CardTitle>
+                <p className="text-sm text-center text-slate-500">You cannot create more interviews unless you upgrade</p>
               </CardContent>
             </Card>
           ) : (
             <CreateInterviewCard />
           )}
+          
           {interviewsLoading || loading ? (
             <InterviewsLoader />
           ) : (
             <>
-              {isModalOpen && (
-                <Modal open={isModalOpen} onClose={() => setIsModalOpen(false)}>
-                  <div className="flex flex-col space-y-4">
-                    <div className="flex justify-center text-indigo-600">
-                      <Gem />
-                    </div>
-                    <h3 className="text-xl font-semibold text-center">
-                      Upgrade to Pro
-                    </h3>
-                    <p className="text-l text-center">
-                      You have reached your limit for the free trial. Please
-                      upgrade to pro to continue using our features.
-                    </p>
-                    <div className="grid grid-cols-2 gap-2">
-                      <div className="flex justify-center items-center">
-                        <Image
-                          src={"/premium-plan-icon.png"}
-                          alt="Graphic"
-                          width={299}
-                          height={300}
-                        />
-                      </div>
-
-                      <div className="grid grid-rows-2 gap-2">
-                        <div className="p-4 border rounded-lg">
-                          <h4 className="text-lg font-medium">Free Plan</h4>
-                          <ul className="list-disc pl-5 mt-2">
-                            <li>10 Responses</li>
-                            <li>Basic Support</li>
-                            <li>Limited Features</li>
-                          </ul>
-                        </div>
-                        <div className="p-4 border rounded-lg">
-                          <h4 className="text-lg font-medium">Pro Plan</h4>
-                          <ul className="list-disc pl-5 mt-2">
-                            <li>Flexible Pay-Per-Response</li>
-                            <li>Priority Support</li>
-                            <li>All Features</li>
-                          </ul>
-                        </div>
-                      </div>
-                    </div>
-                    <p className="text-l text-center">
-                      Contact{" "}
-                      <span className="font-semibold">founders@folo-up.co</span>{" "}
-                      to upgrade your plan.
-                    </p>
-                  </div>
-                </Modal>
-              )}
               {interviews.map((item) => (
                 <InterviewCard
                   id={item.id}
@@ -180,7 +145,85 @@ function Interviews() {
           )}
         </div>
       </div>
-    </main>
+
+      {isModalOpen && (
+        <Modal open={isModalOpen} onClose={() => setIsModalOpen(false)}>
+          <div className="flex flex-col space-y-5">
+            <div className="flex justify-center">
+              <div className="bg-blue-50 p-3 rounded-full">
+                <Gem className="text-primary w-6 h-6" />
+              </div>
+            </div>
+            <h3 className="text-xl font-bold text-center text-slate-800">Upgrade to Pro</h3>
+            <p className="text-slate-600 text-center">
+              You've reached your limit for the free trial. Upgrade to pro to continue using all features.
+            </p>
+            
+            <div className="grid grid-cols-2 gap-4 mt-2">
+              <div className="flex justify-center items-center">
+                <Image
+                  src={"/premium-plan-icon.png"}
+                  alt="Premium Plan"
+                  width={200}
+                  height={200}
+                  className="object-contain"
+                />
+              </div>
+
+              <div className="grid grid-rows-2 gap-3">
+                <div className="p-4 border border-slate-200 rounded-lg bg-slate-50">
+                  <h4 className="text-lg font-medium text-slate-800 mb-2">Free Plan</h4>
+                  <ul className="space-y-1">
+                    <li className="flex items-center text-sm text-slate-600">
+                      <span className="w-1.5 h-1.5 bg-slate-400 rounded-full mr-2"></span>
+                      10 Responses
+                    </li>
+                    <li className="flex items-center text-sm text-slate-600">
+                      <span className="w-1.5 h-1.5 bg-slate-400 rounded-full mr-2"></span>
+                      Basic Support
+                    </li>
+                    <li className="flex items-center text-sm text-slate-600">
+                      <span className="w-1.5 h-1.5 bg-slate-400 rounded-full mr-2"></span>
+                      Limited Features
+                    </li>
+                  </ul>
+                </div>
+                
+                <div className="p-4 border border-primary/30 rounded-lg bg-blue-50">
+                  <h4 className="text-lg font-medium text-primary mb-2">Pro Plan</h4>
+                  <ul className="space-y-1">
+                    <li className="flex items-center text-sm text-slate-600">
+                      <span className="w-1.5 h-1.5 bg-primary rounded-full mr-2"></span>
+                      Flexible Pay-Per-Response
+                    </li>
+                    <li className="flex items-center text-sm text-slate-600">
+                      <span className="w-1.5 h-1.5 bg-primary rounded-full mr-2"></span>
+                      Priority Support
+                    </li>
+                    <li className="flex items-center text-sm text-slate-600">
+                      <span className="w-1.5 h-1.5 bg-primary rounded-full mr-2"></span>
+                      All Features
+                    </li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+            
+            <div className="text-center mt-2">
+              <p className="text-sm text-slate-600">
+                Contact <span className="font-semibold text-primary">founders@folo-up.co</span> to upgrade your plan.
+              </p>
+              <button 
+                onClick={() => setIsModalOpen(false)}
+                className="mt-4 w-full bg-primary text-white py-2.5 px-4 rounded-lg font-medium hover:bg-primary/90 transition-colors"
+              >
+                Got it
+              </button>
+            </div>
+          </div>
+        </Modal>
+      )}
+    </>
   );
 }
 

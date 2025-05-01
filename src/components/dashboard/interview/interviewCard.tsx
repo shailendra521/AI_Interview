@@ -127,62 +127,72 @@ function InterviewCard({ name, interviewerId, id, url, readableSlug }: Props) {
           cursor: isFetching ? "default" : "pointer",
         }}
       >
-        <Card className="relative p-0 mt-4 inline-block cursor-pointer h-60 w-56 ml-1 mr-3 rounded-xl shrink-0 overflow-hidden shadow-md">
-          <CardContent className={`p-0 ${isFetching ? "opacity-60" : ""}`}>
-            <div className="w-full h-40 overflow-hidden bg-indigo-600 flex items-center text-center">
-              <CardTitle className="w-full mt-3 mx-2 text-white text-lg">
+        <Card 
+          hover
+          shadowed
+          className={`relative p-0 h-64 w-64 rounded-xl shrink-0 overflow-hidden border-slate-200 ${isFetching ? "opacity-80" : ""}`}
+        >
+          <CardContent className="p-0 h-full flex flex-col">
+            <div className="w-full h-32 overflow-hidden bg-gradient-to-r from-primary to-blue-500 flex items-center justify-center">
+              <CardTitle className="text-white text-xl font-bold px-4 text-center">
                 {name}
                 {isFetching && (
-                  <div className="z-100 mt-[-5px]">
+                  <div className="mt-2">
                     <MiniLoader />
                   </div>
                 )}
               </CardTitle>
             </div>
-            <div className="flex flex-row items-center mx-4 ">
-              <div className="w-full overflow-hidden">
-                <Image
-                  src={img}
-                  alt="Picture of the interviewer"
-                  width={70}
-                  height={70}
-                  className="object-cover object-center"
-                />
+            <div className="flex-1 p-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <div className="w-10 h-10 rounded-full overflow-hidden border-2 border-white shadow-sm">
+                    <Image
+                      src={img}
+                      alt="Interviewer"
+                      width={40}
+                      height={40}
+                      className="object-cover object-center"
+                    />
+                  </div>
+                  <div className="text-sm font-medium text-slate-800">
+                    Interviewer
+                  </div>
+                </div>
+                <div className="text-sm font-medium bg-blue-50 text-primary rounded-full px-2.5 py-1">
+                  {responseCount || 0} <span className="text-xs">Responses</span>
+                </div>
               </div>
-              <div className="text-black text-sm font-semibold mt-2 mr-2 whitespace-nowrap">
-                Responses:{" "}
-                <span className="font-normal">
-                  {responseCount?.toString() || 0}
-                </span>
+              
+              <div className="flex gap-2 mt-4">
+                <Button
+                  className="flex-1 text-xs gap-1.5 h-9"
+                  variant="soft"
+                  onClick={handleEmailClick}
+                >
+                  <Mail size={14} /> Share
+                </Button>
+                <Button
+                  className={`flex-1 text-xs gap-1.5 h-9 ${copied ? "bg-primary text-white" : ""}`}
+                  variant="subtle"
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    event.preventDefault();
+                    copyToClipboard();
+                  }}
+                >
+                  {copied ? <CopyCheck size={14} /> : <Copy size={14} />} Copy
+                </Button>
               </div>
             </div>
-            <div className="absolute top-2 right-2 flex gap-1">
+            
+            <div className="absolute top-3 right-3">
               <Button
-                className="text-xs text-indigo-600 px-1 h-6"
-                variant={"secondary"}
-                onClick={handleEmailClick}
-              >
-                <Mail size={16} />
-              </Button>
-              <Button
-                className="text-xs text-indigo-600 px-1 h-6"
-                variant={"secondary"}
+                className="h-7 w-7 rounded-full p-0 bg-white/20 text-white hover:bg-white/30"
+                variant="ghost"
                 onClick={handleJumpToInterview}
               >
-                <ArrowUpRight size={16} />
-              </Button>
-              <Button
-                className={`text-xs text-indigo-600 px-1 h-6  ${
-                  copied ? "bg-indigo-300 text-white" : ""
-                }`}
-                variant={"secondary"}
-                onClick={(event) => {
-                  event.stopPropagation();
-                  event.preventDefault();
-                  copyToClipboard();
-                }}
-              >
-                {copied ? <CopyCheck size={16} /> : <Copy size={16} />}
+                <ArrowUpRight size={14} />
               </Button>
             </div>
           </CardContent>
