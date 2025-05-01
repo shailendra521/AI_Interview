@@ -14,7 +14,7 @@ const inter = Inter({ subsets: ["latin"] });
 
 const metadata = {
   title: "TalentAI",
-  description: " AI-powered Interviews",
+  description: "AI-powered Interviews",
   openGraph: {
     title: "TalentAI",
     description: "AI-powered Interviews",
@@ -37,9 +37,10 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
+  const isAuth = pathname.includes("/sign-in") || pathname.includes("/sign-up");
 
   return (
-    <html lang="en">
+    <html lang="en" className="light">
       <head>
         <title>{metadata.title}</title>
         <meta name="description" content={metadata.description} />
@@ -48,7 +49,7 @@ export default function RootLayout({
       <body
         className={cn(
           inter.className,
-          "antialiased overflow-hidden min-h-screen",
+          "antialiased min-h-screen bg-background",
         )}
       >
         <ClerkProvider
@@ -56,24 +57,34 @@ export default function RootLayout({
           afterSignOutUrl={"/sign-in"}
         >
           <Providers>
-            {!pathname.includes("/sign-in") &&
-              !pathname.includes("/sign-up") && <Navbar />}
-            <div className="flex flex-row h-screen">
-              {!pathname.includes("/sign-in") &&
-                !pathname.includes("/sign-up") && <SideMenu />}
-              <div className="ml-[200px] pt-[64px] h-full overflow-y-auto flex-grow">
-                {children}
-              </div>
+            {!isAuth && <Navbar />}
+            <div className="flex flex-row min-h-screen">
+              {!isAuth && <SideMenu />}
+              <main className={cn(
+                "w-full transition-all duration-300 overflow-auto",
+                !isAuth ? "ml-[220px] pt-16" : ""
+              )}>
+                <div className={cn(
+                  "fade-in",
+                  isAuth ? "w-full" : "py-6 px-8"
+                )}>
+                  {children}
+                </div>
+              </main>
             </div>
             <Toaster
+              position="top-right"
+              expand={false}
+              richColors
+              closeButton
               toastOptions={{
                 classNames: {
-                  toast: "bg-white",
-                  title: "text-black",
-                  description: "text-red-400",
-                  actionButton: "bg-indigo-400",
-                  cancelButton: "bg-orange-400",
-                  closeButton: "bg-white-400",
+                  toast: "bg-white border border-slate-200 shadow-lg",
+                  title: "text-slate-800 font-medium",
+                  description: "text-slate-600",
+                  actionButton: "bg-primary hover:bg-primary/90",
+                  cancelButton: "bg-slate-200 text-slate-600 hover:bg-slate-300",
+                  closeButton: "text-slate-400 hover:text-slate-500",
                 },
               }}
             />
