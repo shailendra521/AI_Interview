@@ -1,14 +1,17 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, ChangeEvent } from "react";
 import axios from "axios";
 import { v4 as uuidv4 } from "uuid";
 import { useInterviewers } from "@/contexts/interviewers.context";
 import { InterviewBase, Question } from "@/types/interview";
-import { ChevronRight, ChevronLeft, Info } from "lucide-react";
+import { ChevronRight, ChevronLeft, Info, Upload, Clock, HelpCircle } from "lucide-react";
 import Image from "next/image";
 import { CardTitle } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
+import { Input } from "../../../ui/input";
+import { Label } from "@/components/ui/label";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import FileUpload from "../fileUpload";
 import Modal from "@/components/dashboard/Modal";
 import InterviewerDetailsModal from "@/components/dashboard/interviewer/interviewerDetailsModal";
@@ -128,6 +131,12 @@ function DetailsPopup({
     setInterviewData(updatedInterviewData);
   };
 
+  const isFormValid = name && 
+    objective && 
+    numQuestions && 
+    duration && 
+    selectedInterviewer != BigInt(0);
+
   useEffect(() => {
     if (!open) {
       setName("");
@@ -140,206 +149,333 @@ function DetailsPopup({
     }
   }, [open]);
 
+  useEffect(() => {
+    if (open) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = 'auto';
+    }
+    
+    return () => {
+      document.body.style.overflow = 'auto';
+    };
+  }, [open]);
+
   return (
-    <>
-      <div className="text-center w-[38rem]">
-        <h1 className="text-xl font-semibold">Create an Interview</h1>
-        <div className="flex flex-col justify-center items-start mt-4 ml-10 mr-8">
-          <div className="flex flex-row justify-center items-center">
-            <h3 className="text-sm font-medium">Interview Name:</h3>
-            <input
-              type="text"
-              className="border-b-2 focus:outline-none border-gray-500 px-2 w-96 py-0.5 ml-3"
-              placeholder="e.g. Name of the Interview"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              onBlur={(e) => setName(e.target.value.trim())}
-            />
-          </div>
-          <h3 className="text-sm mt-3 font-medium">Select an Interviewer:</h3>
-          <div className="relative flex items-center mt-1">
-            <div
-              id="slider-3"
-              className=" h-36 pt-1 overflow-x-scroll scroll whitespace-nowrap scroll-smooth scrollbar-hide w-[27.5rem]"
-            >
-              {interviewers.map((item, key) => (
-                <div
-                  className=" p-0 inline-block cursor-pointer ml-1 mr-5 rounded-xl shrink-0 overflow-hidden"
-                  key={item.id}
-                >
-                  <button
-                    className="absolute ml-9"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setInterviewerDetails(item);
-                      setOpenInterviewerDetails(true);
-                    }}
-                  >
-                    <Info size={18} color="#4f46e5" strokeWidth={2.2} />
-                  </button>
-                  <div
-                    className={`w-[96px] overflow-hidden rounded-full ${
-                      selectedInterviewer === item.id
-                        ? "border-4 border-indigo-600"
-                        : ""
-                    }`}
-                    onClick={() => setSelectedInterviewer(item.id)}
-                  >
-                    <Image
-                      src={item.image}
-                      alt="Picture of the interviewer"
-                      width={70}
-                      height={70}
-                      className="w-full h-full object-cover"
-                    />
-                  </div>
-                  <CardTitle className="mt-0 text-xs text-center">
-                    {item.name}
-                  </CardTitle>
-                </div>
-              ))}
+    <TooltipProvider>
+      <div className="bg-white rounded-xl shadow-lg p-5 w-full max-w-2xl overflow-hidden">
+        <div className="max-h-[80vh] overflow-y-auto pr-1 -mr-1">
+          <h1 className="text-2xl font-bold text-center mb-6 text-gray-800">Create an Interview</h1>
+          
+          <div className="space-y-5">
+            {/* Interview Name Section */}
+            <div className="space-y-2">
+              <Label htmlFor="interviewName" className="text-sm font-medium">
+                Interview Name
+              </Label>
+              <Input
+                id="interviewName"
+                type="text"
+                className="w-full border-gray-300 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition-all"
+                placeholder="e.g. Frontend Developer Interview"
+                value={name}
+                onChange={(e: ChangeEvent<HTMLInputElement>) => setName(e.target.value)}
+                onBlur={(e: ChangeEvent<HTMLInputElement>) => setName(e.target.value.trim())}
+              />
             </div>
-            {interviewers.length > 4 ? (
-              <div className="flex-row justify-center ml-3 mb-1 items-center space-y-6">
-                <ChevronRight
-                  className="opacity-50 cursor-pointer hover:opacity-100"
-                  size={27}
-                  onClick={() => slideRight("slider-3", 115)}
-                />
-                <ChevronLeft
-                  className="opacity-50 cursor-pointer hover:opacity-100"
-                  size={27}
-                  onClick={() => slideLeft("slider-3", 115)}
+
+            {/* Interviewer Selection Section */}
+            <div className="space-y-2">
+              <div className="flex items-center">
+                <Label className="text-sm font-medium">Select an Interviewer</Label>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button variant="ghost" className="p-0 h-auto ml-2">
+                      <HelpCircle size={16} className="text-gray-400" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p className="w-[200px] text-xs">Choose an interviewer who will conduct this interview session</p>
+                  </TooltipContent>
+                </Tooltip>
+              </div>
+              
+              <div className="relative flex items-center bg-gray-50 p-4 rounded-lg">
+                <div
+                  id="slider-3"
+                  className="h-36 pt-1 overflow-x-scroll whitespace-nowrap scroll-smooth scrollbar-hide w-full"
+                >
+                  {interviewers.map((item) => (
+                    <div
+                      className="inline-block cursor-pointer ml-1 mr-5 rounded-xl shrink-0 overflow-hidden relative"
+                      key={item.id.toString()}
+                    >
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <button
+                            className="absolute right-0 top-0 p-1 bg-white rounded-full shadow-md"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setInterviewerDetails(item);
+                              setOpenInterviewerDetails(true);
+                            }}
+                          >
+                            <Info size={16} className="text-indigo-600" />
+                          </button>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p className="text-xs">View interviewer details</p>
+                        </TooltipContent>
+                      </Tooltip>
+                      
+                      <div
+                        className={`w-[100px] h-[100px] overflow-hidden rounded-full transition-all ${
+                          selectedInterviewer === item.id
+                            ? "border-4 border-indigo-600 scale-105"
+                            : "border-2 border-gray-200 opacity-80 hover:opacity-100"
+                        }`}
+                        onClick={() => setSelectedInterviewer(item.id)}
+                      >
+                        <Image
+                          src={item.image}
+                          alt={`${item.name}`}
+                          width={100}
+                          height={100}
+                          className="w-full h-full object-cover"
+                        />
+                      </div>
+                      <p className="mt-2 text-sm font-medium text-center truncate w-24 mx-auto">
+                        {item.name}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+                
+                {interviewers.length > 4 && (
+                  <div className="flex flex-col justify-center items-center gap-4 ml-3">
+                    <Button 
+                      variant="outline"
+                      size="icon"
+                      className="rounded-full w-8 h-8 p-0 bg-white shadow-md"
+                      onClick={() => slideLeft("slider-3", 115)}
+                    >
+                      <ChevronLeft size={18} />
+                    </Button>
+                    <Button 
+                      variant="outline"
+                      size="icon"
+                      className="rounded-full w-8 h-8 p-0 bg-white shadow-md"
+                      onClick={() => slideRight("slider-3", 115)}
+                    >
+                      <ChevronRight size={18} />
+                    </Button>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Objective Section */}
+            <div className="space-y-2">
+              <div className="flex items-center">
+                <Label htmlFor="objective" className="text-sm font-medium">
+                  Interview Objective
+                </Label>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button variant="ghost" className="p-0 h-auto ml-2">
+                      <HelpCircle size={16} className="text-gray-400" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p className="w-[200px] text-xs">Describe the purpose and goals of this interview</p>
+                  </TooltipContent>
+                </Tooltip>
+              </div>
+              <Textarea
+                id="objective"
+                value={objective}
+                className="h-24 resize-none border-gray-300 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition-all"
+                placeholder="e.g. Assess candidates based on their technical skills, problem-solving abilities, and experience with React."
+                onChange={(e: ChangeEvent<HTMLTextAreaElement>) => setObjective(e.target.value)}
+                onBlur={(e: ChangeEvent<HTMLTextAreaElement>) => setObjective(e.target.value.trim())}
+              />
+            </div>
+
+            {/* Document Upload Section */}
+            <div className="space-y-2 bg-gray-50 p-4 rounded-lg">
+              <div className="flex items-center">
+                <Label className="text-sm font-medium">
+                  Supporting Documents
+                </Label>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button variant="ghost" className="p-0 h-auto ml-2">
+                      <HelpCircle size={16} className="text-gray-400" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p className="w-[200px] text-xs">Upload job descriptions, requirements, or any reference documents that will help create better questions</p>
+                  </TooltipContent>
+                </Tooltip>
+              </div>
+              <div className="overflow-hidden">
+                <FileUpload
+                  isUploaded={isUploaded}
+                  setIsUploaded={setIsUploaded}
+                  fileName={fileName}
+                  setFileName={setFileName}
+                  setUploadedDocumentContext={setUploadedDocumentContext}
                 />
               </div>
-            ) : (
-              <></>
-            )}
-          </div>
-          <h3 className="text-sm font-medium">Objective:</h3>
-          <Textarea
-            value={objective}
-            className="h-24 mt-2 border-2 border-gray-500 w-[33.2rem]"
-            placeholder="e.g. Find best candidates based on their technical skills and previous projects."
-            onChange={(e) => setObjective(e.target.value)}
-            onBlur={(e) => setObjective(e.target.value.trim())}
-          />
-          <h3 className="text-sm font-medium mt-2">
-            Upload any documents related to the interview.
-          </h3>
-          <FileUpload
-            isUploaded={isUploaded}
-            setIsUploaded={setIsUploaded}
-            fileName={fileName}
-            setFileName={setFileName}
-            setUploadedDocumentContext={setUploadedDocumentContext}
-          />
-          <label className="flex-col mt-7 w-full">
-            <div className="flex items-center cursor-pointer">
-              <span className="text-sm font-medium">
-                Do you prefer the interviewees&apos; responses to be anonymous?
-              </span>
-              <Switch
-                checked={isAnonymous}
-                className={`ml-4 mt-1 ${
-                  isAnonymous ? "bg-indigo-600" : "bg-[#E6E7EB]"
-                }`}
-                onCheckedChange={(checked) => setIsAnonymous(checked)}
-              />
             </div>
-            <span
-              style={{ fontSize: "0.7rem", lineHeight: "0.66rem" }}
-              className="font-light text-xs italic w-full text-left block"
-            >
-              Note: If not anonymous, the interviewee&apos;s email and name will
-              be collected.
-            </span>
-          </label>
-          <div className="flex flex-row gap-3 justify-between w-full mt-3">
-            <div className="flex flex-row justify-center items-center ">
-              <h3 className="text-sm font-medium ">Number of Questions:</h3>
-              <input
-                type="number"
-                step="1"
-                max="5"
-                min="1"
-                className="border-b-2 text-center focus:outline-none  border-gray-500 w-14 px-2 py-0.5 ml-3"
-                value={numQuestions}
-                onChange={(e) => {
-                  let value = e.target.value;
-                  if (
-                    value === "" ||
-                    (Number.isInteger(Number(value)) && Number(value) > 0)
-                  ) {
-                    if (Number(value) > 5) {
-                      value = "5";
+
+            {/* Interview Settings Section */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 bg-gray-50 p-4 rounded-lg">
+              {/* Anonymous Responses */}
+              <div className="space-y-2">
+                <div className="flex flex-col space-y-1">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center">
+                      <Label htmlFor="anonymousSwitch" className="text-sm font-medium cursor-pointer">
+                        Anonymous Responses
+                      </Label>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button variant="ghost" className="p-0 h-auto ml-2">
+                            <HelpCircle size={16} className="text-gray-400" />
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p className="w-[200px] text-xs">When enabled, interviewee names and emails won't be collected</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </div>
+                    <Switch
+                      id="anonymousSwitch"
+                      checked={isAnonymous}
+                      className={`${isAnonymous ? "bg-indigo-600" : "bg-gray-200"}`}
+                      onCheckedChange={(checked) => setIsAnonymous(checked)}
+                    />
+                  </div>
+                  <p className="text-xs text-gray-500 italic">
+                    If disabled, interviewee&apos;s email and name will be collected
+                  </p>
+                </div>
+              </div>
+
+              {/* Question Count */}
+              <div className="space-y-2">
+                <div className="flex items-center">
+                  <Label htmlFor="questionCount" className="text-sm font-medium">
+                    Number of Questions
+                  </Label>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button variant="ghost" className="p-0 h-auto ml-2">
+                        <HelpCircle size={16} className="text-gray-400" />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p className="w-[200px] text-xs">Maximum of 5 questions allowed</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </div>
+                <Input
+                  id="questionCount"
+                  type="number"
+                  min="1"
+                  max="5"
+                  className="w-full border-gray-300 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition-all"
+                  value={numQuestions}
+                  onChange={(e: ChangeEvent<HTMLInputElement>) => {
+                    let value = e.target.value;
+                    if (
+                      value === "" ||
+                      (Number.isInteger(Number(value)) && Number(value) > 0)
+                    ) {
+                      if (Number(value) > 5) {
+                        value = "5";
+                      }
+                      setNumQuestions(value);
                     }
-                    setNumQuestions(value);
-                  }
-                }}
-              />
+                  }}
+                />
+              </div>
+
+              {/* Duration */}
+              <div className="space-y-2">
+                <div className="flex items-center">
+                  <Label htmlFor="duration" className="text-sm font-medium">
+                    Duration (minutes)
+                  </Label>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button variant="ghost" className="p-0 h-auto ml-2">
+                        <HelpCircle size={16} className="text-gray-400" />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p className="w-[200px] text-xs">Maximum of 10 minutes allowed</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </div>
+                <div className="relative">
+                  <Clock className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-500" />
+                  <Input
+                    id="duration"
+                    type="number"
+                    min="1"
+                    max="10"
+                    className="pl-10 w-full border-gray-300 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition-all"
+                    value={duration}
+                    onChange={(e: ChangeEvent<HTMLInputElement>) => {
+                      let value = e.target.value;
+                      if (
+                        value === "" ||
+                        (Number.isInteger(Number(value)) && Number(value) > 0)
+                      ) {
+                        if (Number(value) > 10) {
+                          value = "10";
+                        }
+                        setDuration(value);
+                      }
+                    }}
+                  />
+                </div>
+              </div>
             </div>
-            <div className="flex flex-row justify-center items-center">
-              <h3 className="text-sm font-medium ">Duration (mins):</h3>
-              <input
-                type="number"
-                step="1"
-                max="10"
-                min="1"
-                className="border-b-2 text-center focus:outline-none  border-gray-500 w-14 px-2 py-0.5 ml-3"
-                value={duration}
-                onChange={(e) => {
-                  let value = e.target.value;
-                  if (
-                    value === "" ||
-                    (Number.isInteger(Number(value)) && Number(value) > 0)
-                  ) {
-                    if (Number(value) > 10) {
-                      value = "10";
-                    }
-                    setDuration(value);
-                  }
+
+            {/* Action Buttons */}
+            <div className="flex flex-col sm:flex-row justify-center gap-4 mt-8 mb-4">
+              <Button
+                disabled={!isFormValid || isClicked}
+                className={`${
+                  isFormValid && !isClicked
+                    ? "bg-indigo-600 hover:bg-indigo-700"
+                    : "bg-gray-300"
+                } text-white py-2 px-6 rounded-lg transition-all shadow-md flex-1 max-w-xs`}
+                onClick={() => {
+                  setIsClicked(true);
+                  onGenrateQuestions();
                 }}
-              />
+              >
+                Generate Questions
+              </Button>
+              <Button
+                disabled={!isFormValid || isClicked}
+                className={`${
+                  isFormValid && !isClicked
+                    ? "bg-white text-indigo-600 border border-indigo-600 hover:bg-indigo-50"
+                    : "bg-gray-100 text-gray-400 border border-gray-300"
+                } py-2 px-6 rounded-lg transition-all shadow-sm flex-1 max-w-xs`}
+                onClick={() => {
+                  setIsClicked(true);
+                  onManual();
+                }}
+              >
+                I&apos;ll do it myself
+              </Button>
             </div>
-          </div>
-          <div className="flex flex-row w-full justify-center items-center space-x-24 mt-5">
-            <Button
-              disabled={
-                (name &&
-                objective &&
-                numQuestions &&
-                duration &&
-                selectedInterviewer != BigInt(0)
-                  ? false
-                  : true) || isClicked
-              }
-              className="bg-indigo-600 hover:bg-indigo-800  w-40"
-              onClick={() => {
-                setIsClicked(true);
-                onGenrateQuestions();
-              }}
-            >
-              Generate Questions
-            </Button>
-            <Button
-              disabled={
-                (name &&
-                objective &&
-                numQuestions &&
-                duration &&
-                selectedInterviewer != BigInt(0)
-                  ? false
-                  : true) || isClicked
-              }
-              className="bg-indigo-600 w-40 hover:bg-indigo-800"
-              onClick={() => {
-                setIsClicked(true);
-                onManual();
-              }}
-            >
-              I&apos;ll do it myself
-            </Button>
           </div>
         </div>
       </div>
@@ -352,7 +488,7 @@ function DetailsPopup({
       >
         <InterviewerDetailsModal interviewer={interviewerDetails} />
       </Modal>
-    </>
+    </TooltipProvider>
   );
 }
 
