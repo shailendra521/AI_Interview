@@ -37,7 +37,7 @@ function PopupLoader() {
         <div className="text-center text-md font-semibold mr-2">
           Powered by{" "}
           <span className="font-bold">
-            Folo<span className="text-indigo-600">Up</span>
+            TalentAI
           </span>
         </div>
         <ArrowUpRightSquareIcon className="h-[1.5rem] w-[1.5rem] rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0 text-indigo-500" />
@@ -71,7 +71,7 @@ function PopUpMessage({ title, description, image }: PopupProps) {
         <div className="text-center text-md font-semibold mr-2">
           Powered by{" "}
           <span className="font-bold">
-            Folo<span className="text-indigo-600">Up</span>
+            TalentAI
           </span>
         </div>
         <ArrowUpRightSquareIcon className="h-[1.5rem] w-[1.5rem] rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0 text-indigo-500" />
@@ -151,7 +151,7 @@ function InterviewInterface({ params }: Props) {
             href="www.folo-up.co"
             target="_blank"
           >
-            Talent<span className="text-indigo-600">AI</span>
+            TalentAI
           </a>
         </div>
       </div>
