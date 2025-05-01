@@ -18,8 +18,8 @@ Follow the guidlines below when conversing.
 - If the name is given, use it in the conversation.`;
 
 export const INTERVIEWERS = {
-  LISA: {
-    name: "Explorer Lisa",
+  MAYA: {
+    name: "Explorer Maya",
     rapport: 7,
     exploration: 10,
     empathy: 7,
@@ -29,8 +29,8 @@ export const INTERVIEWERS = {
       "Hi! I'm Lisa, an enthusiastic and empathetic interviewer who loves to explore. With a perfect balance of empathy and rapport, I delve deep into conversations while maintaining a steady pace. Let's embark on this journey together and uncover meaningful insights!",
     audio: "Lisa.wav",
   },
-  BOB: {
-    name: "Empathetic Bob",
+  ROBIN: {
+    name: "Empathetic Robin",
     rapport: 7,
     exploration: 7,
     empathy: 10,
