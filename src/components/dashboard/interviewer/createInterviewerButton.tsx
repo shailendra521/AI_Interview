@@ -1,9 +1,10 @@
 "use client";
 
 import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { InterviewerService } from "@/services/interviewers.service";
 import axios from "axios";
-import { Plus, Loader2 } from "lucide-react";
+import { Plus, Loader2, UserPlus } from "lucide-react";
 import { useState } from "react";
 
 function CreateInterviewerButton() {
@@ -18,27 +19,20 @@ function CreateInterviewerButton() {
   };
 
   return (
-    <>
-      <Card
-        className="p-0 inline-block cursor-pointer hover:scale-105 ease-in-out duration-300 h-40 w-36 ml-1 mr-3 rounded-xl shrink-0 overflow-hidden shadow-md"
-        onClick={() => createInterviewers()}
-      >
-        <CardContent className="p-0">
-          {isLoading ? (
-            <div className="w-full h-20 overflow-hidden flex justify-center items-center">
-              <Loader2 size={40} className="animate-spin" />
-            </div>
-          ) : (
-            <div className="w-full h-20 overflow-hidden flex justify-center items-center">
-              <Plus size={40} />
-            </div>
-          )}
-          <p className="my-3 mx-auto text-xs text-wrap w-fit text-center">
-            Create two Default Interviewers
-          </p>
-        </CardContent>
-      </Card>
-    </>
+    <Button
+      variant="outline"
+      size="sm"
+      className="flex items-center gap-2 font-medium"
+      onClick={() => createInterviewers()}
+      disabled={isLoading}
+    >
+      {isLoading ? (
+        <Loader2 className="h-4 w-4 animate-spin" />
+      ) : (
+        <UserPlus className="h-4 w-4" />
+      )}
+      <span>Create Interviewers</span>
+    </Button>
   );
 }
 

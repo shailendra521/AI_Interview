@@ -1,4 +1,5 @@
-import { ReactNode } from "react";
+import { ReactNode, useEffect } from "react";
+import { createPortal } from "react-dom";
 import { X } from "lucide-react";
 
 interface ModalProps {
@@ -14,27 +15,51 @@ export default function Modal({
   closeOnOutsideClick = true,
   children,
 }: ModalProps) {
-  return (
+  // Prevent body scrolling when modal is open
+  useEffect(() => {
+    if (open) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "";
+    }
+    
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [open]);
+  
+  // Return null if not open or if we're in SSR
+  if (!open || typeof document === "undefined") return null;
+  
+  // Use createPortal to render at the document body level
+  return createPortal(
     <div
-      className={`fixed z-50 inset-0 flex justify-center items-center transition-colors 
-      ${open ? "visible bg-black/30" : "invisible"}
-      `}
+      className="fixed z-[9999] inset-0 flex justify-center items-center transition-colors px-4 py-6 overflow-y-auto"
+      style={{
+        backgroundColor: "rgba(0, 0, 0, 0.5)",
+        backdropFilter: "blur(2px)"
+      }}
       onClick={closeOnOutsideClick ? onClose : () => {}}
     >
       <div
-        className={`bg-white rounded-xl shadow p-6 transition-all
-        ${open ? "scale-100 opacity-100" : "scale-125 opacity-0"}
-        `}
+        className="bg-white rounded-xl shadow-lg max-w-4xl w-full mx-auto max-h-[90vh] overflow-y-auto transition-all scale-100 opacity-100"
+        style={{
+          transform: "translateY(0)",
+          position: "relative"
+        }}
         onClick={(e) => e.stopPropagation()}
       >
-        <button
-          className="absolute top-2 right-2 p-1 rounded-lg text-gray-400 bg-white hover:text-gray-600"
-          onClick={onClose}
-        >
-          <X size={24} />
-        </button>
-        {children}
+        <div className="p-6 relative">
+          <button
+            className="absolute top-3 right-3 p-1.5 rounded-full text-gray-400 hover:bg-gray-100 hover:text-gray-600 transition-colors z-10"
+            onClick={onClose}
+          >
+            <X size={20} />
+          </button>
+          {children}
+        </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
