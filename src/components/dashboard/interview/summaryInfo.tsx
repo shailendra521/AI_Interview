@@ -4,7 +4,7 @@ import { Interview } from "@/types/interview";
 import { Interviewer } from "@/types/interviewer";
 import { Response } from "@/types/response";
 import React, { useEffect, useState } from "react";
-import { UserCircleIcon, SmileIcon, Info } from "lucide-react";
+import { UserCircleIcon, SmileIcon, Info, ClipboardList, Clock, BarChart3 } from "lucide-react";
 import { useInterviewers } from "@/contexts/interviewers.context";
 import { PieChart } from "@mui/x-charts/PieChart";
 import { CandidateStatus } from "@/lib/enum";
@@ -32,11 +32,11 @@ function InfoTooltip({ content }: { content: string }) {
       <Tooltip>
         <TooltipTrigger>
           <Info
-            className="h-2 w-2 text-[#4F46E5] inline-block ml-0 align-super font-bold"
-            strokeWidth={2.5}
+            className="h-3 w-3 text-indigo-500 inline-block ml-1 align-middle"
+            strokeWidth={2}
           />
         </TooltipTrigger>
-        <TooltipContent className="bg-gray-500 text-white font-normal">
+        <TooltipContent className="bg-indigo-600 text-white font-normal p-3 rounded-lg shadow-lg border border-indigo-300">
           <p>{content}</p>
         </TooltipContent>
       </Tooltip>
@@ -173,61 +173,96 @@ function SummaryInfo({ responses, interview }: SummaryProps) {
   return (
     <div className="h-screen z-[10] mx-2">
       {responses.length > 0 ? (
-        <div className="bg-slate-200 rounded-2xl min-h-[120px] p-2 ">
-          <div className="flex flex-row gap-2 justify-between items-center mx-2">
+        <div className="bg-gradient-to-br from-white to-slate-100 rounded-2xl min-h-[120px] p-6 shadow-lg border border-slate-200">
+          <div className="flex flex-row gap-2 justify-between items-center mb-4">
             <div className="flex flex-row gap-2 items-center">
-              <p className="font-semibold my-2">Overall Analysis</p>
+              <div className="bg-indigo-600 text-white p-2 rounded-lg">
+                <BarChart3 className="h-5 w-5" />
+              </div>
+              <h2 className="font-bold text-xl text-indigo-900">Overall Analysis</h2>
             </div>
-            <p className="text-sm">
-              Interviewer used:{" "}
-              <span className="font-medium">{interviewer?.name}</span>
+            <div className="flex items-center bg-indigo-50 p-2 px-4 rounded-full shadow-sm">
+              <span className="text-sm font-medium text-indigo-800">
+                Interviewer: <span className="font-semibold">{interviewer?.name}</span>
+              </span>
+            </div>
+          </div>
+          
+          <div className="bg-white p-3 rounded-xl border border-slate-200 shadow-sm mb-6">
+            <p className="text-sm flex items-center gap-1">
+              <ClipboardList className="h-4 w-4 text-indigo-600" />
+              <span className="font-medium text-gray-600">Interview Description:</span>
+              <span className="font-semibold text-indigo-800">{interview?.description}</span>
             </p>
           </div>
-          <p className="my-3 ml-2 text-sm">
-            Interview Description:{" "}
-            <span className="font-medium">{interview?.description}</span>
-          </p>
-          <div className="flex flex-col gap-1 my-2 mt-4 mx-2 p-4 rounded-2xl bg-slate-50 shadow-md">
+          
+          <div className="bg-white rounded-xl shadow-md p-4 mb-6 border border-slate-200">
+            <h3 className="font-semibold text-lg mb-3 text-indigo-900 px-2">Response Details</h3>
             <ScrollArea className="h-[250px]">
               <DataTable data={tableData} interviewId={interview?.id || ""} />
             </ScrollArea>
           </div>
-          <div className="flex flex-row gap-1 my-2 justify-center">
-            <div className="flex flex-col">
-              <div className="flex flex-col gap-1 my-2 mt-4 mx-2 p-3 rounded-2xl bg-slate-50 shadow-md max-w-[400px]">
-                <div className="flex flex-row items-center justify-center gap-1 font-semibold mb-1 text-[15px]">
-                  Average Duration
-                  <InfoTooltip content="Average time users took to complete an interview" />
-                </div>
-                <div className="flex items-center justify-center">
-                  <p className="text-2xl font-semibold text-indigo-600 w-fit p-1 px-2 bg-indigo-100 rounded-md">
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+            <div className="bg-white rounded-xl shadow-md p-6 border border-slate-200 flex flex-col">
+              <h3 className="font-semibold text-lg text-indigo-900 mb-4 border-b pb-2">Key Metrics</h3>
+              
+              <div className="grid grid-cols-2 gap-4 h-full">
+                <div className="flex flex-col items-center justify-center p-3 bg-indigo-50 rounded-xl border border-indigo-100">
+                  <div className="flex items-center justify-center gap-2 mb-2">
+                    <Clock className="h-5 w-5 text-indigo-600" />
+                    <h3 className="font-semibold text-gray-700 text-sm">Average Duration</h3>
+                    <InfoTooltip content="Average time users took to complete an interview" />
+                  </div>
+                  <div className="text-3xl font-bold text-indigo-600 mt-2">
                     {convertSecondstoMMSS(totalDuration / responses.length)}
-                  </p>
+                  </div>
                 </div>
-              </div>
-              <div className="flex flex-col items-center justify-center gap-1 mx-2 p-3 rounded-2xl bg-slate-50 shadow-md max-w-[360px]">
-                <div className="flex flex-row gap-1 font-semibold mb-1 text-[15px] mx-auto text-center">
-                  Interview Completion Rate
-                  <InfoTooltip content="Percentage of interviews completed successfully" />
+                
+                <div className="flex flex-col items-center justify-center p-3 bg-indigo-50 rounded-xl border border-indigo-100">
+                  <div className="flex items-center justify-center gap-2 mb-2">
+                    <BarChart3 className="h-5 w-5 text-indigo-600" />
+                    <h3 className="font-semibold text-gray-700 text-sm">Completion Rate</h3>
+                    <InfoTooltip content="Percentage of interviews completed successfully" />
+                  </div>
+                  <div className="text-3xl font-bold text-indigo-600 mt-2">
+                    {Math.round((completedInterviews / responses.length) * 10000) / 100}%
+                  </div>
                 </div>
-                <p className="w-fit text-2xl font-semibold text-indigo-600  p-1 px-2 bg-indigo-100 rounded-md">
-                  {Math.round(
-                    (completedInterviews / responses.length) * 10000,
-                  ) / 100}
-                  %
-                </p>
               </div>
             </div>
-            <div className="flex flex-col gap-1 my-2 mt-4 mx-2 p-4 rounded-2xl bg-slate-50 shadow-md max-w-[360px]">
-              <div className="flex flex-row gap-2 text-[15px] font-bold mb-3 mx-auto">
-                <SmileIcon />
-                Candidate Sentiment
+            
+            <div className="bg-white rounded-xl shadow-md p-5 border border-slate-200 flex flex-col items-center">
+              <div className="flex items-center justify-center gap-2 mb-4">
+                <SmileIcon className="h-5 w-5 text-indigo-600" />
+                <h3 className="font-semibold text-gray-700">Candidate Sentiment</h3>
                 <InfoTooltip content="Distribution of user sentiments during interviews" />
               </div>
               <PieChart
+                colors={['#22c55e', '#eab308', '#ef4444']}
                 sx={{
                   "& .MuiChartsLegend-series text": {
+                    fontFamily: "'Inter', sans-serif",
+                    fontSize: "0.85rem !important",
+                    fontWeight: 500,
+                  },
+                  "& .MuiChartsLegend-mark": {
+                    width: 12,
+                    height: 12,
+                    borderRadius: 6,
+                  },
+                  "& .MuiChartsAxis-tickLabel": {
+                    fontFamily: "'Inter', sans-serif",
+                  },
+                  "& .MuiChartsLegend-label": {
+                    fontFamily: "'Inter', sans-serif",
+                  },
+                  "& .MuiPieArc-label": {
+                    fontFamily: "'Inter', sans-serif",
                     fontSize: "0.8rem !important",
+                    fontWeight: 600,
+                    fill: "#ffffff",
+                    textShadow: "0px 1px 2px rgba(0,0,0,0.5)",
                   },
                 }}
                 series={[
@@ -249,34 +284,87 @@ function SummaryInfo({ responses, interview }: SummaryProps) {
                         id: 2,
                         value: sentimentCount.negative,
                         label: `Negative (${sentimentCount.negative})`,
-                        color: "#eb4444",
+                        color: "#ef4444",
                       },
                     ],
                     highlightScope: { faded: "global", highlighted: "item" },
                     faded: {
-                      innerRadius: 10,
+                      innerRadius: 30,
                       additionalRadius: -10,
                       color: "gray",
                     },
+                    innerRadius: 20,
+                    paddingAngle: 0,
+                    cornerRadius: 0,
+                    arcLabel: (item) => {
+                      const percentage = Math.round((item.value / totalResponses) * 100);
+                      if (percentage < 10) return "";
+                      
+                      // Extract the first word of the label (e.g., "Positive" from "Positive (3)")
+                      const labelText = item.label?.split(" ")[0] || "";
+                      return `${labelText}: ${item.value}`;
+                    },
+                    arcLabelMinAngle: 20,
                   },
                 ]}
-                width={360}
-                height={120}
+                width={300}
+                height={180}
+                margin={{ top: 5, bottom: 5, left: 5, right: 100 }}
+                slotProps={{
+                  legend: {
+                    direction: "column",
+                    position: { vertical: "middle", horizontal: "right" },
+                    padding: 0,
+                    itemMarkWidth: 10,
+                    itemMarkHeight: 10,
+                    markGap: 5,
+                    itemGap: 16,
+                    labelStyle: {
+                      fontSize: "0.75rem",
+                      fill: "#444",
+                      textAnchor: "start",
+                    },
+                  },
+                }}
               />
             </div>
-            <div className="flex flex-col gap-1 my-2 mt-4 mx-2 p-4 rounded-2xl bg-slate-50 shadow-md">
-              <div className="flex flex-row gap-2 text-[15px] font-bold mx-auto mb-1">
-                <UserCircleIcon />
-                Candidate Status
-                <InfoTooltip content="Breakdown of the candidate selection status" />
-              </div>
-              <div className="text-sm text-center mb-1">
-                Total Responses: {totalResponses}
-              </div>
+          </div>
+            
+          <div className="bg-white rounded-xl shadow-md p-5 border border-slate-200 flex flex-col items-center">
+            <div className="flex items-center justify-center gap-2 mb-3">
+              <UserCircleIcon className="h-5 w-5 text-indigo-600" />
+              <h3 className="font-semibold text-gray-700">Candidate Selection Status</h3>
+              <InfoTooltip content="Breakdown of the candidate selection status" />
+            </div>
+            <div className="text-sm text-center mb-3 text-gray-500">
+              Total Responses: <span className="font-medium text-indigo-900">{totalResponses}</span>
+            </div>
+            <div className="w-full flex justify-center h-[280px]">
               <PieChart
+                colors={['#22c55e', '#eab308', '#ef4444', '#9ca3af']}
                 sx={{
                   "& .MuiChartsLegend-series text": {
+                    fontFamily: "'Inter', sans-serif",
+                    fontSize: "0.85rem !important",
+                    fontWeight: 500,
+                  },
+                  "& .MuiChartsLegend-mark": {
+                    width: 12,
+                    height: 12,
+                    borderRadius: 6,
+                  },
+                  "& .MuiChartsAxis-tickLabel": {
+                    fontFamily: "'Inter', sans-serif",
+                  },
+                  "& .MuiChartsLegend-label": {
+                    fontFamily: "'Inter', sans-serif",
+                  },
+                  "& .MuiPieArc-label": {
+                    fontFamily: "'Inter', sans-serif",
                     fontSize: "0.8rem !important",
+                    fontWeight: 600,
+                    fill: "#ffffff",
+                    textShadow: "0px 1px 2px rgba(0,0,0,0.5)",
                   },
                 }}
                 series={[
@@ -296,10 +384,9 @@ function SummaryInfo({ responses, interview }: SummaryProps) {
                       },
                       {
                         id: 2,
-                        value:
-                          candidateStatusCount[CandidateStatus.NOT_SELECTED],
+                        value: candidateStatusCount[CandidateStatus.NOT_SELECTED],
                         label: `Not Selected (${candidateStatusCount[CandidateStatus.NOT_SELECTED]})`,
-                        color: "#eb4444",
+                        color: "#ef4444",
                       },
                       {
                         id: 3,
@@ -310,23 +397,36 @@ function SummaryInfo({ responses, interview }: SummaryProps) {
                     ],
                     highlightScope: { faded: "global", highlighted: "item" },
                     faded: {
-                      innerRadius: 10,
+                      innerRadius: 30,
                       additionalRadius: -10,
                       color: "gray",
                     },
+                    innerRadius: 20,
+                    paddingAngle: 0,
+                    cornerRadius: 0,
+                    arcLabel: (item) => {
+                      const percentage = Math.round((item.value / totalResponses) * 100);
+                      if (percentage < 10) return "";
+                      
+                      // Extract the first word of the label (e.g., "Selected" from "Selected (3)")
+                      const labelText = item.label?.split(" ")[0] || "";
+                      return `${labelText}: ${item.value}`;
+                    },
+                    arcLabelMinAngle: 20,
                   },
                 ]}
-                width={360}
-                height={120}
+                width={700}
+                height={250}
+                margin={{ top: 10, bottom: 80, left: 50, right: 50 }}
                 slotProps={{
                   legend: {
-                    direction: "column",
-                    position: { vertical: "middle", horizontal: "right" },
-                    padding: 0,
-                    itemMarkWidth: 10,
-                    itemMarkHeight: 10,
-                    markGap: 5,
-                    itemGap: 5,
+                    direction: "row",
+                    position: { vertical: "bottom", horizontal: "middle" },
+                    padding: 20,
+                    itemMarkWidth: 12,
+                    itemMarkHeight: 12,
+                    markGap: 8,
+                    itemGap: 25,
                   },
                 }}
               />
@@ -334,16 +434,17 @@ function SummaryInfo({ responses, interview }: SummaryProps) {
           </div>
         </div>
       ) : (
-        <div className="w-[85%] h-[60%] flex flex-col items-center justify-center">
-          <div className="flex flex-col items-center">
+        <div className="w-full h-[60%] flex flex-col items-center justify-center bg-white rounded-2xl shadow-md p-10">
+          <div className="flex flex-col items-center bg-slate-50 p-10 rounded-xl border border-slate-200">
             <Image
               src="/no-responses.png"
-              alt="logo"
-              width={270}
-              height={270}
+              alt="No responses"
+              width={300}
+              height={300}
+              className="mb-4"
             />
-            <p className="text-center text-sm mt-0">
-              Please share with your intended respondents
+            <p className="text-center text-indigo-800 font-medium mt-4">
+              No responses yet. Please share with your intended respondents.
             </p>
           </div>
         </div>
