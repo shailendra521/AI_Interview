@@ -1,131 +1,108 @@
 import Image from "next/image";
 import { CardTitle } from "@/components/ui/card";
-import { Slider } from "@/components/ui/slider";
-import ReactAudioPlayer from "react-audio-player";
 import { Interviewer } from "@/types/interviewer";
 import { User } from "lucide-react";
+import { Slider } from "@/components/ui/slider";
 
 interface Props {
-  interviewer: Interviewer | undefined;
+  interviewer: Interviewer;
 }
 
 function InterviewerDetailsModal({ interviewer }: Props) {
   return (
-    <div className="w-full">
-      <div className="text-center mb-6">
-        <CardTitle className="text-2xl md:text-3xl font-semibold">
-          {interviewer?.name}
-        </CardTitle>
-      </div>
-
-      <div className="space-y-6">
-        {/* Profile Section */}
-        <div className="flex flex-col md:flex-row gap-5 items-center md:items-start">
-          <div className="w-36 h-36 md:w-44 md:h-44 flex-shrink-0 border-3 overflow-hidden border-gray-400 rounded-xl">
+    <div className="w-full max-w-2xl mx-auto">
+      <div className="relative">
+        <div className="flex items-center gap-6 mb-8">
+          <div className="w-24 h-24 rounded-2xl bg-slate-100 flex items-center justify-center flex-shrink-0 overflow-hidden">
             {interviewer?.image ? (
               <Image
                 src={interviewer.image}
                 alt={`${interviewer?.name || 'Interviewer'}`}
-                width={180}
-                height={180}
-                className="w-full h-full object-cover object-center"
+                width={96}
+                height={96}
+                className="w-full h-full object-cover"
               />
             ) : (
-              <div className="w-full h-full flex items-center justify-center bg-slate-100">
-                <User className="w-14 h-14 text-slate-300" />
-              </div>
+              <User className="w-12 h-12 text-slate-300" />
             )}
           </div>
-
-          <div className="flex-grow space-y-3 w-full">
-            <div className="prose prose-sm max-w-none text-gray-600">
-              <p className="text-sm md:text-base leading-relaxed text-left">
-                {interviewer?.description || "No description available."}
-              </p>
-            </div>
-            
-            {interviewer?.audio && (
-              <div className="w-full">
-                <ReactAudioPlayer 
-                  src={`/audio/${interviewer.audio}`}
-                  controls
-                  className="w-full mt-2"
-                  style={{ maxWidth: "100%" }}
-                />
-              </div>
-            )}
+          <div>
+            <h2 className="text-2xl font-semibold text-slate-900 mb-2">
+              {interviewer?.name}
+            </h2>
+            <p className="text-base text-slate-600">
+              Hi! I'm {interviewer?.name?.split(' ')[0]}, an enthusiastic and empathetic interviewer who loves to explore. With a perfect balance of empathy and rapport, I delve deep into conversations while maintaining a steady pace.
+            </p>
           </div>
         </div>
 
-        {/* Settings Section */}
-        <div className="bg-slate-50 rounded-xl p-4 md:p-5">
-          <h3 className="text-base font-medium mb-4 text-center md:text-left">
-            Interviewer Settings
-          </h3>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-y-4 gap-x-6">
-            <div className="space-y-3">
-              <div className="flex items-center gap-2">
-                <h4 className="w-20 text-sm font-medium">Empathy</h4>
-                <div className="flex-grow flex items-center gap-2">
+        <div className="space-y-8">
+          <div>
+            <h3 className="text-lg font-medium text-slate-900 mb-6">Interviewer Settings</h3>
+            <div className="space-y-6">
+              <div className="grid grid-cols-2 gap-x-12 gap-y-6">
+                <div className="space-y-4">
+                  <div className="flex justify-between items-center">
+                    <span className="text-base font-medium text-slate-700">Empathy</span>
+                    <span className="text-sm text-slate-600">0.7</span>
+                  </div>
                   <Slider
-                    value={[(interviewer?.empathy || 10) / 10]}
+                    defaultValue={[0.7]}
                     max={1}
                     step={0.1}
-                    className="flex-grow"
+                    className="w-full"
                   />
-                  <span className="text-sm font-medium text-primary w-8 text-right">
-                    {((interviewer?.empathy || 10) / 10).toFixed(1)}
-                  </span>
                 </div>
-              </div>
-              
-              <div className="flex items-center gap-2">
-                <h4 className="w-20 text-sm font-medium">Rapport</h4>
-                <div className="flex-grow flex items-center gap-2">
+                <div className="space-y-4">
+                  <div className="flex justify-between items-center">
+                    <span className="text-base font-medium text-slate-700">Explore</span>
+                    <span className="text-sm text-slate-600">1.0</span>
+                  </div>
                   <Slider
-                    value={[(interviewer?.rapport || 10) / 10]}
+                    defaultValue={[1.0]}
                     max={1}
                     step={0.1}
-                    className="flex-grow"
+                    className="w-full"
                   />
-                  <span className="text-sm font-medium text-primary w-8 text-right">
-                    {((interviewer?.rapport || 10) / 10).toFixed(1)}
-                  </span>
+                </div>
+                <div className="space-y-4">
+                  <div className="flex justify-between items-center">
+                    <span className="text-base font-medium text-slate-700">Rapport</span>
+                    <span className="text-sm text-slate-600">0.7</span>
+                  </div>
+                  <Slider
+                    defaultValue={[0.7]}
+                    max={1}
+                    step={0.1}
+                    className="w-full"
+                  />
+                </div>
+                <div className="space-y-4">
+                  <div className="flex justify-between items-center">
+                    <span className="text-base font-medium text-slate-700">Speed</span>
+                    <span className="text-sm text-slate-600">0.5</span>
+                  </div>
+                  <Slider
+                    defaultValue={[0.5]}
+                    max={1}
+                    step={0.1}
+                    className="w-full"
+                  />
                 </div>
               </div>
             </div>
+          </div>
 
-            <div className="space-y-3">
-              <div className="flex items-center gap-2">
-                <h4 className="w-20 text-sm font-medium">Explore</h4>
-                <div className="flex-grow flex items-center gap-2">
-                  <Slider
-                    value={[(interviewer?.exploration || 10) / 10]}
-                    max={1}
-                    step={0.1}
-                    className="flex-grow"
-                  />
-                  <span className="text-sm font-medium text-primary w-8 text-right">
-                    {((interviewer?.exploration || 10) / 10).toFixed(1)}
-                  </span>
-                </div>
-              </div>
-              
-              <div className="flex items-center gap-2">
-                <h4 className="w-20 text-sm font-medium">Speed</h4>
-                <div className="flex-grow flex items-center gap-2">
-                  <Slider
-                    value={[(interviewer?.speed || 10) / 10]}
-                    max={1}
-                    step={0.1}
-                    className="flex-grow"
-                  />
-                  <span className="text-sm font-medium text-primary w-8 text-right">
-                    {((interviewer?.speed || 10) / 10).toFixed(1)}
-                  </span>
-                </div>
-              </div>
+          <div className="space-y-4">
+            <h3 className="text-lg font-medium text-slate-900">Voice Sample</h3>
+            <div className="w-full bg-slate-50 rounded-xl p-4">
+              <audio 
+                controls 
+                className="w-full"
+                src={interviewer?.audio}
+              >
+                Your browser does not support the audio element.
+              </audio>
             </div>
           </div>
         </div>

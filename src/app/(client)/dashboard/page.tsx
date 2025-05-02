@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from "react";
 import { useOrganization } from "@clerk/nextjs";
 import InterviewCard from "@/components/dashboard/interview/interviewCard";
-import CreateInterviewCard from "@/components/dashboard/interview/createInterviewCard";
+import CreateInterviewButton from "@/components/dashboard/interview/createInterviewCard";
 import { Card, CardContent, CardTitle } from "@/components/ui/card";
 import { InterviewService } from "@/services/interviews.service";
 import { ClientService } from "@/services/clients.service";
@@ -93,28 +93,13 @@ function Interviews() {
           <h1 className="text-2xl font-bold text-slate-800">My Interviews</h1>
           <p className="text-slate-500 mt-1">Create and manage your interview experiences</p>
         </div>
-        <div className="flex items-center gap-3">
-          <Card className="px-4 py-3 flex items-center gap-2 border-slate-200 shadow-sm">
-            <BarChart3 className="text-primary w-5 h-5" />
-            <div>
-              <p className="text-sm font-medium text-slate-600">Total Interviews</p>
-              <p className="text-xl font-bold text-slate-800">{interviews.length}</p>
-            </div>
-          </Card>
-        </div>
+        <CreateInterviewButton />
       </div>
 
-      <div className="bg-white rounded-xl p-6 border border-slate-200 shadow-sm mb-8">
-        <div className="flex justify-between items-center mb-4">
-          <h2 className="text-lg font-semibold text-slate-800">Recent Interviews</h2>
-          <button className="text-primary text-sm font-medium flex items-center hover:text-primary/80 transition-colors">
-            View All <ChevronRight className="w-4 h-4 ml-1" />
-          </button>
-        </div>
-        
-        <div className="relative flex flex-wrap gap-4">
+      <div>
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
           {currentPlan == "free_trial_over" ? (
-            <Card className="flex bg-gradient-to-br from-slate-50 to-slate-100 items-center border-dashed border-slate-300 border hover:shadow-md transition-all duration-300 ease-in-out h-64 w-64 rounded-xl shrink-0 overflow-hidden hover-lift">
+            <Card className="flex bg-gradient-to-br from-slate-50 to-slate-100 items-center border-dashed border-slate-300 border hover:shadow-md transition-all duration-300 ease-in-out h-full w-full rounded-xl shrink-0 overflow-hidden hover-lift">
               <CardContent className="flex items-center flex-col mx-auto p-6">
                 <div className="flex flex-col justify-center items-center w-full mb-4">
                   <Plus size={64} strokeWidth={1} className="text-slate-400" />
@@ -123,9 +108,7 @@ function Interviews() {
                 <p className="text-sm text-center text-slate-500">You cannot create more interviews unless you upgrade</p>
               </CardContent>
             </Card>
-          ) : (
-            <CreateInterviewCard />
-          )}
+          ) : null}
           
           {interviewsLoading || loading ? (
             <InterviewsLoader />

@@ -1,14 +1,10 @@
-export interface Interviewer {
-  id: bigint;
-  user_id: string;
-  created_at: Date;
+export type Interviewer = {
+  id: string;
   name: string;
-  rapport: number;
-  exploration: number;
-  empathy: number;
-  speed: number;
-  image: string;
-  description: string;
-  audio: string;
-  agent_id: string;
-}
+  image?: string;
+  role?: string;
+  status?: 'Active' | 'Inactive' | 'Draft';
+  personality_traits?: string[];
+  interviews_count?: number;
+  last_used?: string;
+};

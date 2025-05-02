@@ -3,7 +3,7 @@ import Image from "next/image";
 import { Card, CardContent, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import { Copy, ArrowUpRight, Mail } from "lucide-react";
+import { Copy, ArrowUpRight, Mail, Calendar, Clock } from "lucide-react";
 import { CopyCheck } from "lucide-react";
 import { ResponseService } from "@/services/responses.service";
 import axios from "axios";
@@ -130,71 +130,101 @@ function InterviewCard({ name, interviewerId, id, url, readableSlug }: Props) {
         <Card 
           hover
           shadowed
-          className={`relative p-0 h-64 w-64 rounded-xl shrink-0 overflow-hidden border-slate-200 ${isFetching ? "opacity-80" : ""}`}
+          className={`relative p-4 w-full max-w-md rounded-lg border border-slate-200 ${isFetching ? "opacity-80" : ""}`}
         >
-          <CardContent className="p-0 h-full flex flex-col">
-            <div className="w-full h-32 overflow-hidden bg-gradient-to-r from-primary to-blue-500 flex items-center justify-center">
-              <CardTitle className="text-white text-xl font-bold px-4 text-center">
-                {name}
-                {isFetching && (
-                  <div className="mt-2">
-                    <MiniLoader />
-                  </div>
-                )}
-              </CardTitle>
-            </div>
-            <div className="flex-1 p-4">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <div className="w-10 h-10 rounded-full overflow-hidden border-2 border-white shadow-sm">
-                    <Image
-                      src={img}
-                      alt="Interviewer"
-                      width={40}
-                      height={40}
-                      className="object-cover object-center"
-                    />
-                  </div>
-                  <div className="text-sm font-medium text-slate-800">
-                    Interviewer
-                  </div>
-                </div>
-                <div className="text-sm font-medium bg-blue-50 text-primary rounded-full px-2.5 py-1">
-                  {responseCount || 0} <span className="text-xs">Responses</span>
-                </div>
+          <CardContent className="p-0">
+            {/* Header with Candidate Info */}
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-600">
+                C
               </div>
-              
-              <div className="flex gap-2 mt-4">
-                <Button
-                  className="flex-1 text-xs gap-1.5 h-9"
-                  variant="soft"
-                  onClick={handleEmailClick}
-                >
-                  <Mail size={14} /> Share
-                </Button>
-                <Button
-                  className={`flex-1 text-xs gap-1.5 h-9 ${copied ? "bg-primary text-white" : ""}`}
-                  variant="subtle"
-                  onClick={(event) => {
-                    event.stopPropagation();
-                    event.preventDefault();
-                    copyToClipboard();
-                  }}
-                >
-                  {copied ? <CopyCheck size={14} /> : <Copy size={14} />} Copy
-                </Button>
+              <div>
+                <h3 className="font-medium text-slate-900">{name}</h3>
+                <p className="text-sm text-slate-500">Candidate</p>
               </div>
             </div>
-            
-            <div className="absolute top-3 right-3">
+
+            {/* Status and Response Count */}
+            <div className="flex items-center gap-2 mb-4">
+              <span className="text-sm font-medium text-amber-600 bg-amber-50 px-3 py-1 rounded-full">
+                Scheduled
+              </span>
+              <div className="text-sm font-medium text-blue-600 bg-blue-50 px-3 py-1 rounded-full flex items-center gap-1">
+                <span>{responseCount || 0}</span>
+                <span className="text-xs">Responses</span>
+              </div>
+              {isFetching && (
+                <div className="ml-2">
+                  <MiniLoader />
+                </div>
+              )}
+            </div>
+
+            {/* Interview Time */}
+            <div className="space-y-2 mb-4">
+              <div className="flex items-center gap-2 text-slate-600">
+                <Calendar size={16} />
+                <span className="text-sm">Today</span>
+              </div>
+              <div className="flex items-center gap-2 text-slate-600">
+                <Clock size={16} />
+                <span className="text-sm">2:00 PM (30 min)</span>
+              </div>
+            </div>
+
+            {/* Technical Interviewer */}
+            <div className="flex items-center gap-2 p-2 bg-slate-50 rounded-lg mb-4">
+              <div className="w-6 h-6 rounded-full bg-blue-100 flex items-center justify-center text-blue-600">
+                TI
+              </div>
+              <span className="text-sm text-slate-700">Technical Interviewer</span>
+            </div>
+
+            {/* Action Buttons */}
+            <div className="flex gap-2 justify-end">
               <Button
-                className="h-7 w-7 rounded-full p-0 bg-white/20 text-white hover:bg-white/30"
+                size="sm"
                 variant="ghost"
-                onClick={handleJumpToInterview}
+                className="h-8 w-8 p-0"
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  handleJumpToInterview(e);
+                }}
               >
-                <ArrowUpRight size={14} />
+                <ArrowUpRight size={16} />
+              </Button>
+              <Button
+                size="sm"
+                variant="ghost"
+                className="h-8 w-8 p-0"
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  handleEmailClick(e);
+                }}
+              >
+                <Mail size={16} />
+              </Button>
+              <Button
+                size="sm"
+                variant="ghost"
+                className="h-8 w-8 p-0"
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  copyToClipboard();
+                }}
+              >
+                {copied ? <CopyCheck size={16} /> : <Copy size={16} />}
               </Button>
             </div>
+
+            {isFetching && (
+              <div className="absolute inset-0 bg-white/50 flex items-center justify-center">
+                <MiniLoader />
+              </div>
+            )}
           </CardContent>
         </Card>
       </a>

@@ -5,32 +5,22 @@ import { Plus } from "lucide-react";
 import { Card, CardContent, CardTitle } from "@/components/ui/card";
 import CreateInterviewModal from "@/components/dashboard/interview/createInterviewModal";
 import Modal from "@/components/dashboard/Modal";
+import { Button } from "@/components/ui/button";
+import Link from "next/link";
 
-function CreateInterviewCard() {
+export default function CreateInterviewButton() {
   const [open, setOpen] = useState(false);
 
   return (
     <>
-      <Card
-        hover
-        gradient
-        className="flex items-center border-dashed border-slate-300 border cursor-pointer transition-all duration-300 ease-in-out h-64 w-64 rounded-xl shrink-0 overflow-hidden"
-        onClick={() => {
-          setOpen(true);
-        }}
+      <Button 
+        className="bg-[#02563D] hover:bg-[#02563D]/90 text-white font-medium" 
+        onClick={() => setOpen(true)}
       >
-        <CardContent className="flex items-center flex-col justify-center mx-auto p-6 text-center">
-          <div className="flex flex-col justify-center items-center w-full mb-3">
-            <div className="bg-blue-50 rounded-full p-4 mb-3">
-              <Plus size={36} strokeWidth={1.5} className="text-primary" />
-            </div>
-          </div>
-          <CardTitle className="text-slate-800 text-lg mb-2">
-            Create an Interview
-          </CardTitle>
-          <p className="text-sm text-slate-500">Set up a new interview experience</p>
-        </CardContent>
-      </Card>
+        <Plus className="h-4 w-4 mr-1.5" />
+        Schedule Interview
+      </Button>
+
       <Modal
         open={open}
         closeOnOutsideClick={false}
@@ -43,5 +33,3 @@ function CreateInterviewCard() {
     </>
   );
 }
-
-export default CreateInterviewCard;
