@@ -14,15 +14,15 @@ interface EmailPopupProps {
 // Dummy email data
 const dummyEmails = [
   { id: 1, email: "7990satyam200@gmail.com" },
-  { id: 2, email: "jane.smith@example.com" },
-  { id: 3, email: "alex.jackson@example.com" },
-  { id: 4, email: "sarah.miller@example.com" },
-  { id: 5, email: "michael.brown@example.com" },
-  { id: 6, email: "emma.wilson@example.com" },
-  { id: 7, email: "david.taylor@example.com" },
-  { id: 8, email: "olivia.johnson@example.com" },
-  { id: 9, email: "james.anderson@example.com" },
-  { id: 10, email: "sophia.martin@example.com" },
+  { id: 2, email: "shailendramalviya159@gmail.com" },
+  { id: 3, email: "alex.jackson@gmail.com" },
+  { id: 4, email: "sarah.miller@gmail.com" },
+  { id: 5, email: "michael.brown@gmail.com" },
+  { id: 6, email: "emma.wilson@gmail.com" },
+  { id: 7, email: "david.taylor@gmail.com" },
+  { id: 8, email: "olivia.johnson@gmail.com" },
+  { id: 9, email: "james.anderson@gmail.com" },
+  { id: 10, email: "sophia.martin@gmail.com" },
 ];
 
 function EmailPopup({ open, onClose, shareUrl }: EmailPopupProps) {
@@ -30,7 +30,6 @@ function EmailPopup({ open, onClose, shareUrl }: EmailPopupProps) {
   const [message, setMessage] = useState<string>(`Check out this interview: ${shareUrl}`);
   const [sending, setSending] = useState<boolean>(false);
   const [sent, setSent] = useState<boolean>(false);
-  const formRef = useRef<HTMLFormElement>(null);
 
   // Initialize EmailJS when component mounts
   useEffect(() => {
@@ -54,7 +53,7 @@ function EmailPopup({ open, onClose, shareUrl }: EmailPopupProps) {
     }
   };
 
-  const handleSendEmails = (e: React.FormEvent) => {
+  const handleSendEmails = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (selectedEmails.length === 0) {
@@ -66,49 +65,78 @@ function EmailPopup({ open, onClose, shareUrl }: EmailPopupProps) {
     }
 
     setSending(true);
-    
-    // Get selected email addresses as string
-    const selectedEmailAddresses = dummyEmails
-      .filter(email => selectedEmails.includes(email.id))
-      .map(email => email.email)
-      .join(", ");
-    
-    if (formRef.current) {
-      // Use EmailJS sendForm with the form reference
-      emailjs
-        .sendForm(
-          'service_wxu72kj',            // Your EmailJS service ID
-          'template_b6bxc2a',           // Your EmailJS template ID
-          formRef.current,              // Form reference
-          'hvnzhY9reCDP7ATuf'           // Your EmailJS public key
-        )
-        .then(
-          (result) => {
-            console.log('SUCCESS!', result.text);
-            setSending(false);
-            setSent(true);
-            
-            toast.success(`Email sent to ${selectedEmails.length} recipients!`, {
-              position: "bottom-right",
-              duration: 3000,
-            });
-            
-            setTimeout(() => {
-              onClose();
-              setSent(false);
-              setSelectedEmails([]);
-            }, 1500);
-          },
-          (error) => {
-            console.log('FAILED...', error.text);
-            setSending(false);
-            
-            toast.error(`Failed to send email: ${error.text}`, {
-              position: "bottom-right",
-              duration: 3000,
-            });
+    setSent(false); // Reset sent state before sending
+
+    const emailPromises = selectedEmails.map(id => {
+      const recipient = dummyEmails.find(email => email.id === id);
+      if (!recipient) return Promise.reject(new Error(`Email ID ${id} not found`));
+
+      const templateParams = {
+        email: recipient.email,
+        message: message,
+        interview_link: shareUrl,
+      };
+
+      return emailjs.send(
+        'service_wxu72kj',
+        'template_nn9caov',
+        templateParams,
+        'hvnzhY9reCDP7ATuf'
+      );
+    });
+
+    try {
+      const results = await Promise.allSettled(emailPromises);
+      
+      const successfulSends = results.filter(result => result.status === 'fulfilled').length;
+      const failedSends = results.filter(result => result.status === 'rejected').length;
+
+      setSending(false);
+
+      if (successfulSends > 0) {
+        setSent(true);
+        toast.success(`Sent ${successfulSends} out of ${selectedEmails.length} emails successfully.`, {
+          position: "bottom-right",
+          duration: 3000,
+        });
+      }
+
+      if (failedSends > 0) {
+        toast.error(`Failed to send ${failedSends} emails. Check console for details.`, {
+          position: "bottom-right",
+          duration: 5000,
+        });
+        // Log detailed errors for debugging
+        results.forEach((result, index) => {
+          if (result.status === 'rejected') {
+            const recipient = dummyEmails.find(e => e.id === selectedEmails[index]); // Find recipient again
+            const failedEmail = recipient?.email || `ID ${selectedEmails[index]}`;
+            // Reconstruct params for logging clarity, using 'email' and 'interview_link' keys
+            const paramsSent = { 
+               email: recipient?.email, 
+               message: message, 
+               interview_link: shareUrl, // Use 'interview_link' key here too
+            };
+            console.error(`Email send failed for ${failedEmail}:`, result.reason, 'Params sent:', paramsSent);
           }
-        );
+        });
+      }
+
+      if (successfulSends > 0) {
+         setTimeout(() => {
+           onClose();
+           setSent(false);
+           setSelectedEmails([]);
+         }, 1500);
+      }
+      
+    } catch (error) {
+      console.error('Unexpected error during bulk email sending:', error);
+      setSending(false);
+      toast.error(`An unexpected error occurred while sending emails.`, {
+        position: "bottom-right",
+        duration: 3000,
+      });
     }
   };
 
@@ -121,7 +149,7 @@ function EmailPopup({ open, onClose, shareUrl }: EmailPopupProps) {
       <div className="w-[32rem] flex flex-col">
         <p className="text-lg font-semibold mb-4">Send Interview Link via Email</p>
         
-        <form ref={formRef} onSubmit={handleSendEmails}>
+        <form onSubmit={handleSendEmails}>
           <div className="mb-4">
             <div className="flex justify-between items-center mb-2">
               <h3 className="font-medium">Recipients</h3>
@@ -162,15 +190,6 @@ function EmailPopup({ open, onClose, shareUrl }: EmailPopupProps) {
               onChange={(e) => setMessage(e.target.value)}
               className="w-full p-2 border border-gray-300 rounded min-h-[100px]"
               placeholder="Enter your message here..."
-            />
-            {/* Hidden fields for EmailJS template */}
-            <input 
-              type="hidden" 
-              name="to_email" 
-              value={dummyEmails
-                .filter(email => selectedEmails.includes(email.id))
-                .map(email => email.email)
-                .join(", ")} 
             />
             <input type="hidden" name="interview_url" value={shareUrl} />
           </div>

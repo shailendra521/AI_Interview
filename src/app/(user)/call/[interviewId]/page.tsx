@@ -30,7 +30,7 @@ function PopupLoader() {
       </div>
       <a
         className="flex flex-row justify-center align-middle mt-3"
-        href="https://folo-up.co/"
+        href="https://hrone.cloud/"
         target="_blank"
         rel="noopener noreferrer"
       >
@@ -64,7 +64,7 @@ function PopUpMessage({ title, description, image }: PopupProps) {
       </div>
       <a
         className="flex flex-row justify-center align-middle mt-3"
-        href="https://folo-up.co/"
+        href="https://hrone.cloud/"
         target="_blank"
         rel="noopener noreferrer"
       >
@@ -148,7 +148,7 @@ function InterviewInterface({ params }: Props) {
           Powered by{" "}
           <a
             className="font-bold underline"
-            href="www.folo-up.co"
+            href="www.hrone.cloud"
             target="_blank"
           >
             TalentAI
