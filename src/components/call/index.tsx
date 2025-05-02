@@ -112,6 +112,46 @@ function Call({ interview }: InterviewProps) {
       current.scrollTop = current.scrollHeight;
     }
   }, [lastUserResponse]);
+  
+  const [cheating, setCheating] = useState(false); // for cheating
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      axios
+        .get("http://localhost:5000/cheating_status")
+        .then((res) => {
+          const isCheating = res.data?.cheating === true;
+          setCheating(isCheating); // Ensures we set `false` too if needed
+        })
+        .catch((err) => {
+          console.error("Error checking cheating status:", err);
+          setCheating(false); // Optional fallback to prevent stuck state
+        });
+    },1000);
+  
+    return () => clearInterval(interval);
+  }, []);
+
+  //const [showPopup, setShowPopup] = useState(false);
+
+  
+  const [cheatingHandled, setCheatingHandled] = useState(false);
+
+
+useEffect(() => {
+  if (isCalling && cheating && !cheatingHandled) {
+    const confirmed = window.confirm("🚨 Cheating Detected! Do you want to end the interview?");
+    setCheatingHandled(true); // prevent repeat
+    if (confirmed) {
+      onEndCallClick();
+    }
+  } else if (!cheating && cheatingHandled) {
+    // Reset for future detections
+    setCheatingHandled(false);
+  }
+}, [cheating, cheatingHandled, isCalling]);
+
+  
 
   useEffect(() => {
     let intervalId: any;
@@ -279,6 +319,7 @@ function Call({ interview }: InterviewProps) {
     <div className="flex justify-center items-center min-h-screen bg-gray-100">
       {isStarted && <TabSwitchWarning />}
       <div className="bg-white rounded-md md:w-[80%] w-[90%]">
+     
         <Card className="h-[88vh] rounded-lg border-2 border-b-4 border-r-4 border-black text-xl font-bold transition-all  md:block dark:border-white ">
           <div>
             <div className="m-4 h-[15px] rounded-lg border-[1px]  border-black">
@@ -444,20 +485,23 @@ function Call({ interview }: InterviewProps) {
                   >
                     {lastUserResponse}
                   </div>
+              
                   <div className="flex flex-col mx-auto justify-center items-center align-middle">
-                    <Image
-                      src={`/user-icon.png`}
-                      alt="Picture of the user"
-                      width={120}
-                      height={120}
-                      className={`object-cover object-center mx-auto my-auto ${
-                        activeTurn === "user"
-                          ? `border-4 border-[${interview.theme_color}] rounded-full`
-                          : ""
-                      }`}
-                    />
-                    <div className="font-semibold">You</div>
-                  </div>
+                  <div className="App">
+                {/* {showPopup && (
+                <div className="fixed top-4 right-4 bg-red-600 text-white px-4 py-2 rounded shadow-lg z-50">
+                🚨 Cheating Detected!
+                </div>
+                  )} */}
+        <img
+        src="http://localhost:5000/video_feed"
+        alt="Webcam Feed"
+        width="720"
+        height="480"
+      />
+    </div>
+  <div className="font-semibold">You</div>
+</div>
                 </div>
               </div>
             )}
