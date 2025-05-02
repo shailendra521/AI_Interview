@@ -14,6 +14,28 @@ const createResponse = async (payload: any) => {
     return [];
   }
 
+  if (payload.interview_id) {
+    try {
+      const { data: interview } = await supabase
+        .from("interview")
+        .select("response_count")
+        .eq("id", payload.interview_id)
+        .single();
+      
+      if (interview) {
+        const currentCount = interview.response_count || 0;
+        const newCount = typeof currentCount === 'bigint' ? Number(currentCount) + 1 : currentCount + 1;
+        
+        await supabase
+          .from("interview")
+          .update({ response_count: newCount })
+          .eq("id", payload.interview_id);
+      }
+    } catch (updateError) {
+      console.error("Failed to update interview response count:", updateError);
+    }
+  }
+
   return data[0]?.id;
 };
 
@@ -97,14 +119,50 @@ const getResponseByCallId = async (id: string) => {
 };
 
 const deleteResponse = async (id: string) => {
+  // First get the response to know which interview it belongs to
+  const { data: response } = await supabase
+    .from("response")
+    .select("interview_id")
+    .eq("call_id", id)
+    .single();
+
+  // Delete the response
   const { error, data } = await supabase
     .from("response")
     .delete()
     .eq("call_id", id);
+    
   if (error) {
     console.log(error);
-
     return [];
+  }
+
+  // Decrement the interview's response_count if we found an interview_id
+  if (response?.interview_id) {
+    try {
+      // Get current response count
+      const { data: interview } = await supabase
+        .from("interview")
+        .select("response_count")
+        .eq("id", response.interview_id)
+        .single();
+      
+      // Decrement response count, but don't go below 0
+      if (interview) {
+        const currentCount = interview.response_count || 0;
+        const newCount = Math.max(
+          0, 
+          typeof currentCount === 'bigint' ? Number(currentCount) - 1 : currentCount - 1
+        );
+        
+        await supabase
+          .from("interview")
+          .update({ response_count: newCount })
+          .eq("id", response.interview_id);
+      }
+    } catch (updateError) {
+      console.error("Failed to update interview response count:", updateError);
+    }
   }
 
   return data;

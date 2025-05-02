@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { useOrganization } from "@clerk/nextjs";
 import InterviewCard from "@/components/dashboard/interview/interviewCard";
 import CreateInterviewCard from "@/components/dashboard/interview/createInterviewCard";
@@ -8,19 +8,25 @@ import { Card, CardContent, CardTitle } from "@/components/ui/card";
 import { InterviewService } from "@/services/interviews.service";
 import { ClientService } from "@/services/clients.service";
 import { ResponseService } from "@/services/responses.service";
+import { InterviewerService } from "@/services/interviewers.service";
 import { useInterviews } from "@/contexts/interviews.context";
 import Modal from "@/components/dashboard/Modal";
-import { ChevronRight, Gem, Plus, BarChart3 } from "lucide-react";
+import { ChevronRight, Gem, Plus, BarChart3, LayoutGrid, List, Users } from "lucide-react";
 import Image from "next/image";
+import { Button } from "@/components/ui/button";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 function Interviews() {
   const { interviews, interviewsLoading } = useInterviews();
   const { organization } = useOrganization();
   const [loading, setLoading] = useState<boolean>(false);
   const [currentPlan, setCurrentPlan] = useState<string>("");
-  const [allowedResponsesCount, setAllowedResponsesCount] =
-    useState<number>(10);
+  const [allowedResponsesCount, setAllowedResponsesCount] = useState<number>(10);
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
+  const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
+  const [interviewers, setInterviewers] = useState<Record<string, any>>({});
+  const [activeFilter, setActiveFilter] = useState<string | null>(null);
+  const [totalResponses, setTotalResponses] = useState(0);
 
   function InterviewsLoader() {
     return (
@@ -86,6 +92,67 @@ function Interviews() {
     fetchResponsesCount();
   }, [organization, currentPlan, allowedResponsesCount]);
 
+  // Fetch all interviewers for the interviews
+  useEffect(() => {
+    const fetchInterviewers = async () => {
+      if (interviews.length === 0) return;
+      
+      try {
+        // Get unique interviewer IDs without using Set spread operator to avoid linter issues
+        const interviewerIds = interviews.map(item => item.interviewer_id.toString());
+        const uniqueInterviewerIds = Array.from(new Set(interviewerIds));
+        
+        const interviewersData: Record<string, any> = {};
+        
+        for (const id of uniqueInterviewerIds) {
+          const interviewer = await InterviewerService.getInterviewer(BigInt(id));
+          if (interviewer) {
+            interviewersData[id] = interviewer;
+          }
+        }
+        
+        setInterviewers(interviewersData);
+      } catch (error) {
+        console.error("Error fetching interviewers:", error);
+      }
+    };
+    
+    fetchInterviewers();
+  }, [interviews]);
+
+  // Get unique interviewers for filtering
+  const uniqueInterviewers = useMemo(() => {
+    return Object.values(interviewers);
+  }, [interviewers]);
+
+  // Filter interviews by interviewer if activeFilter is set
+  const filteredInterviews = useMemo(() => {
+    if (!activeFilter) return interviews;
+    return interviews.filter(interview => 
+      interview.interviewer_id.toString() === activeFilter
+    );
+  }, [interviews, activeFilter]);
+
+  // Calculate response statistics
+  useEffect(() => {
+    const fetchTotalResponses = async () => {
+      let total = 0;
+      
+      for (const interview of filteredInterviews) {
+        try {
+          const responses = await ResponseService.getAllResponses(interview.id.toString());
+          total += responses.length;
+        } catch (error) {
+          console.error("Error fetching responses for interview:", error);
+        }
+      }
+      
+      setTotalResponses(total);
+    };
+    
+    fetchTotalResponses();
+  }, [filteredInterviews]);
+
   return (
     <>
       <div className="flex justify-between items-center mb-6">
@@ -98,7 +165,15 @@ function Interviews() {
             <BarChart3 className="text-primary w-5 h-5" />
             <div>
               <p className="text-sm font-medium text-slate-600">Total Interviews</p>
-              <p className="text-xl font-bold text-slate-800">{interviews.length}</p>
+              <p className="text-xl font-bold text-slate-800">{filteredInterviews.length}</p>
+            </div>
+          </Card>
+          
+          <Card className="px-4 py-3 flex items-center gap-2 border-slate-200 shadow-sm">
+            <Users className="text-indigo-500 w-5 h-5" />
+            <div>
+              <p className="text-sm font-medium text-slate-600">Responses</p>
+              <p className="text-xl font-bold text-slate-800">{totalResponses}</p>
             </div>
           </Card>
         </div>
@@ -106,13 +181,62 @@ function Interviews() {
 
       <div className="bg-white rounded-xl p-6 border border-slate-200 shadow-sm mb-8">
         <div className="flex justify-between items-center mb-4">
-          <h2 className="text-lg font-semibold text-slate-800">Recent Interviews</h2>
-          <button className="text-primary text-sm font-medium flex items-center hover:text-primary/80 transition-colors">
-            View All <ChevronRight className="w-4 h-4 ml-1" />
-          </button>
+          <h2 className="text-lg font-semibold text-slate-800">Interview Gallery</h2>
+          <div className="flex items-center gap-4">
+            {uniqueInterviewers.length > 0 && (
+              <div className="flex items-center gap-2 mr-4">
+                <span className="text-sm text-slate-500">Filter:</span>
+                <div className="flex -space-x-2">
+                  {uniqueInterviewers.map((interviewer, index) => (
+                    <button 
+                      key={interviewer.id}
+                      onClick={() => setActiveFilter(activeFilter === interviewer.id.toString() ? null : interviewer.id.toString())}
+                      className={`relative rounded-full w-8 h-8 border-2 transition-all duration-200 ${
+                        activeFilter === interviewer.id.toString() 
+                          ? 'border-primary scale-110 z-10' 
+                          : 'border-white hover:scale-105 hover:z-10'
+                      }`}
+                      title={interviewer.name}
+                    >
+                      <Image 
+                        src={interviewer.image || "/default-avatar.png"} 
+                        alt={interviewer.name}
+                        width={32}
+                        height={32}
+                        className="rounded-full object-cover"
+                      />
+                    </button>
+                  ))}
+                  {activeFilter && (
+                    <button 
+                      onClick={() => setActiveFilter(null)}
+                      className="ml-2 text-xs text-slate-500 hover:text-slate-700"
+                    >
+                      Clear
+                    </button>
+                  )}
+                </div>
+              </div>
+            )}
+            
+            <Tabs defaultValue="grid" className="h-9" onValueChange={(value) => setViewMode(value as "grid" | "list")}>
+              <TabsList className="grid grid-cols-2 h-8 w-20">
+                <TabsTrigger value="grid" className="p-0">
+                  <LayoutGrid className="h-4 w-4" />
+                </TabsTrigger>
+                <TabsTrigger value="list" className="p-0">
+                  <List className="h-4 w-4" />
+                </TabsTrigger>
+              </TabsList>
+            </Tabs>
+            
+            <button className="text-primary text-sm font-medium flex items-center hover:text-primary/80 transition-colors">
+              View All <ChevronRight className="w-4 h-4 ml-1" />
+            </button>
+          </div>
         </div>
         
-        <div className="relative flex flex-wrap gap-4">
+        <div className={`relative ${viewMode === "grid" ? "flex flex-wrap gap-4" : "space-y-3"}`}>
           {currentPlan == "free_trial_over" ? (
             <Card className="flex bg-gradient-to-br from-slate-50 to-slate-100 items-center border-dashed border-slate-300 border hover:shadow-md transition-all duration-300 ease-in-out h-64 w-64 rounded-xl shrink-0 overflow-hidden hover-lift">
               <CardContent className="flex items-center flex-col mx-auto p-6">
@@ -131,15 +255,18 @@ function Interviews() {
             <InterviewsLoader />
           ) : (
             <>
-              {interviews.map((item) => (
-                <InterviewCard
-                  id={item.id}
-                  interviewerId={item.interviewer_id}
-                  key={item.id}
-                  name={item.name}
-                  url={item.url ?? ""}
-                  readableSlug={item.readable_slug}
-                />
+              {filteredInterviews.map((item) => (
+                <div className={viewMode === "list" ? "w-full animate-fade-in" : "animate-fade-in"} key={item.id}>
+                  <InterviewCard
+                    id={item.id}
+                    interviewerId={item.interviewer_id}
+                    name={item.name}
+                    url={item.url ?? ""}
+                    readableSlug={item.readable_slug}
+                    interviewer={interviewers[item.interviewer_id.toString()]}
+                    viewMode={viewMode}
+                  />
+                </div>
               ))}
             </>
           )}

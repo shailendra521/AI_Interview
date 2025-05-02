@@ -12,9 +12,8 @@ function CreateInterviewCard() {
   return (
     <>
       <Card
-        hover
         gradient
-        className="flex items-center border-dashed border-slate-300 border cursor-pointer transition-all duration-300 ease-in-out h-64 w-64 rounded-xl shrink-0 overflow-hidden"
+        className="flex items-center border-dashed border-slate-300 border cursor-pointer transition-all duration-300 ease-in-out h-64 w-64 rounded-xl shrink-0 overflow-hidden hover:border-blue-200 hover:shadow-md hover-lift"
         onClick={() => {
           setOpen(true);
         }}
