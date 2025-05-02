@@ -211,7 +211,7 @@ function Interviews() {
             
             <div className="text-center mt-2">
               <p className="text-sm text-slate-600">
-                Contact <span className="font-semibold text-primary">founders@folo-up.co</span> to upgrade your plan.
+                Contact <span className="font-semibold text-primary">info@hrone.cloud</span> to upgrade your plan.
               </p>
               <button 
                 onClick={() => setIsModalOpen(false)}
