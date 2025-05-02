@@ -1,8 +1,8 @@
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import Modal from "@/components/dashboard/Modal";
-import { Check, Mail } from "lucide-react";
+import { Check, Mail, Search, X } from "lucide-react";
 import emailjs from '@emailjs/browser';
 
 interface EmailPopupProps {
@@ -27,9 +27,9 @@ const dummyEmails = [
 
 function EmailPopup({ open, onClose, shareUrl }: EmailPopupProps) {
   const [selectedEmails, setSelectedEmails] = useState<number[]>([]);
-  const [message, setMessage] = useState<string>(`Check out this interview: ${shareUrl}`);
   const [sending, setSending] = useState<boolean>(false);
   const [sent, setSent] = useState<boolean>(false);
+  const [searchTerm, setSearchTerm] = useState<string>("");
 
   // Initialize EmailJS when component mounts
   useEffect(() => {
@@ -53,11 +53,15 @@ function EmailPopup({ open, onClose, shareUrl }: EmailPopupProps) {
     }
   };
 
+  const filteredEmails = dummyEmails.filter(email => 
+    email.email.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
   const handleSendEmails = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (selectedEmails.length === 0) {
-      toast.error("Please select at least one email to send to.", {
+      toast.error("Please select at least one recipient.", {
         position: "bottom-right",
         duration: 3000,
       });
@@ -67,13 +71,15 @@ function EmailPopup({ open, onClose, shareUrl }: EmailPopupProps) {
     setSending(true);
     setSent(false); // Reset sent state before sending
 
+    const defaultMessage = `Check out this interview: ${shareUrl}`;
+    
     const emailPromises = selectedEmails.map(id => {
       const recipient = dummyEmails.find(email => email.id === id);
       if (!recipient) return Promise.reject(new Error(`Email ID ${id} not found`));
 
       const templateParams = {
         email: recipient.email,
-        message: message,
+        message: defaultMessage,
         interview_link: shareUrl,
       };
 
@@ -114,7 +120,7 @@ function EmailPopup({ open, onClose, shareUrl }: EmailPopupProps) {
             // Reconstruct params for logging clarity, using 'email' and 'interview_link' keys
             const paramsSent = { 
                email: recipient?.email, 
-               message: message, 
+               message: defaultMessage, 
                interview_link: shareUrl, // Use 'interview_link' key here too
             };
             console.error(`Email send failed for ${failedEmail}:`, result.reason, 'Params sent:', paramsSent);
@@ -146,76 +152,111 @@ function EmailPopup({ open, onClose, shareUrl }: EmailPopupProps) {
 
   return (
     <Modal open={open} closeOnOutsideClick={false} onClose={onClose}>
-      <div className="w-[32rem] flex flex-col">
-        <p className="text-lg font-semibold mb-4">Send Interview Link via Email</p>
+      <div className="w-[32rem] flex flex-col bg-white rounded-xl overflow-hidden">
+        <div className="flex justify-between items-center p-5 border-b border-gray-100">
+          <h2 className="text-xl font-semibold text-gray-800 flex items-center">
+            <Mail className="mr-3 text-indigo-600" size={20} />
+            Share Interview via Email
+          </h2>
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            onClick={onClose}
+            className="rounded-full h-8 w-8 hover:bg-gray-100"
+          >
+            <X size={18} />
+          </Button>
+        </div>
         
-        <form onSubmit={handleSendEmails}>
-          <div className="mb-4">
-            <div className="flex justify-between items-center mb-2">
-              <h3 className="font-medium">Recipients</h3>
+        <form onSubmit={handleSendEmails} className="p-5">
+          <div className="mb-6">
+            <div className="flex justify-between items-center mb-3">
+              <h3 className="font-medium text-gray-700">Recipients</h3>
               <Button 
-                variant="ghost" 
+                variant="outline" 
                 size="sm" 
                 type="button"
                 onClick={handleSelectAll}
-                className="text-xs"
+                className="text-xs hover:bg-indigo-50 hover:text-indigo-600 border-indigo-200"
               >
                 {selectedEmails.length === dummyEmails.length ? "Deselect All" : "Select All"}
               </Button>
             </div>
             
-            <div className="max-h-48 overflow-y-auto border border-gray-200 rounded-md p-2">
-              {dummyEmails.map(email => (
-                <div key={email.id} className="flex items-center mb-2 last:mb-0">
-                  <input
-                    type="checkbox"
-                    id={`email-${email.id}`}
-                    checked={selectedEmails.includes(email.id)}
-                    onChange={() => handleSelectEmail(email.id)}
-                    className="mr-3 h-4 w-4"
-                  />
-                  <label htmlFor={`email-${email.id}`} className="flex-1 cursor-pointer">
-                    {email.email}
-                  </label>
-                </div>
-              ))}
+            <div className="relative mb-3">
+              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <Search size={16} className="text-gray-400" />
+              </div>
+              <input
+                type="text"
+                placeholder="Search recipients..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 focus:outline-none"
+              />
             </div>
+            
+            <div className="max-h-60 overflow-y-auto border border-gray-200 rounded-md shadow-sm bg-gray-50">
+              {filteredEmails.length > 0 ? (
+                filteredEmails.map(email => (
+                  <div key={email.id} className="flex items-center p-3 border-b border-gray-100 last:border-0 hover:bg-indigo-50 transition-colors duration-150">
+                    <input
+                      type="checkbox"
+                      id={`email-${email.id}`}
+                      checked={selectedEmails.includes(email.id)}
+                      onChange={() => handleSelectEmail(email.id)}
+                      className="mr-3 h-4 w-4 rounded text-indigo-600 focus:ring-indigo-500 focus:ring-opacity-25"
+                    />
+                    <label htmlFor={`email-${email.id}`} className="flex-1 cursor-pointer text-gray-700 font-medium">
+                      {email.email}
+                    </label>
+                  </div>
+                ))
+              ) : (
+                <div className="p-4 text-center text-gray-500">No matching recipients found</div>
+              )}
+            </div>
+            
+            <p className="mt-2 text-xs text-gray-500">
+              Selected {selectedEmails.length} of {dummyEmails.length} recipients
+            </p>
           </div>
           
-          <div className="mb-4">
-            <label className="block font-medium mb-2">Message</label>
-            <textarea
-              name="message"
-              value={message}
-              onChange={(e) => setMessage(e.target.value)}
-              className="w-full p-2 border border-gray-300 rounded min-h-[100px]"
-              placeholder="Enter your message here..."
-            />
-            <input type="hidden" name="interview_url" value={shareUrl} />
-          </div>
+          <input type="hidden" name="interview_url" value={shareUrl} />
           
-          <Button
-            type="submit"
-            className="flex items-center bg-indigo-600"
-            disabled={sending || sent}
-          >
-            {sending ? (
-              <>
-                <span className="mr-2">Sending...</span>
-                <div className="h-4 w-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-              </>
-            ) : sent ? (
-              <>
-                <Check size={16} className="mr-2" />
-                Sent
-              </>
-            ) : (
-              <>
-                <Mail size={16} className="mr-2" />
-                Send Email{selectedEmails.length > 0 ? ` (${selectedEmails.length})` : ''}
-              </>
-            )}
-          </Button>
+          <div className="flex justify-end mt-4">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={onClose}
+              className="mr-3 border-gray-300 hover:bg-gray-50"
+              disabled={sending}
+            >
+              Cancel
+            </Button>
+            <Button
+              type="submit"
+              className="flex items-center bg-indigo-600 hover:bg-indigo-700 transition-colors"
+              disabled={sending || sent}
+            >
+              {sending ? (
+                <>
+                  <span className="mr-2">Sending...</span>
+                  <div className="h-4 w-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                </>
+              ) : sent ? (
+                <>
+                  <Check size={16} className="mr-2" />
+                  Sent Successfully
+                </>
+              ) : (
+                <>
+                  <Mail size={16} className="mr-2" />
+                  Send Email{selectedEmails.length > 0 ? ` (${selectedEmails.length})` : ''}
+                </>
+              )}
+            </Button>
+          </div>
         </form>
       </div>
     </Modal>
