@@ -52,7 +52,7 @@ export default function AnalyticsDashboardClient({
   const recentResponses = initialRecentResponses;
   const topInterviews = initialTopInterviews;
   const feedbackStats = initialFeedbackStats || {
-    satisfactionCounts: { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 },
+    satisfactionCounts: { 1: 0, 2: 0, 3: 0 },
     totalFeedbackCount: 0,
     feedbackData: [],
   };
@@ -209,25 +209,30 @@ export default function AnalyticsDashboardClient({
             <div className="h-64 flex flex-col justify-center">
               {feedbackStats.totalFeedbackCount > 0 ? (
                 <div className="grid grid-cols-1 gap-2 w-full">
-                  {Object.entries(feedbackStats.satisfactionCounts).map(([rating, count]) => (
-                    <div key={rating} className="flex items-center">
-                      <div className="w-20 text-sm font-medium flex items-center">
-                        {parseInt(rating) === 1 ? '⭐' : '⭐'.repeat(parseInt(rating))}
-                      </div>
-                      <div className="w-[60%] mx-2">
-                        <div className="h-6 bg-gray-100 rounded-full overflow-hidden shadow-inner">
-                          <div 
-                            className="h-full bg-gradient-to-r from-yellow-400 to-amber-500 shadow-sm" 
-                            style={{ 
-                              width: `${(count / feedbackStats.totalFeedbackCount) * 100}%`,
-                              transition: 'width 1s ease-in-out' 
-                            }} 
-                          />
+                  {Object.entries(feedbackStats.satisfactionCounts)
+                    .filter(([rating]) => ['1', '2', '3'].includes(rating))
+                    .map(([rating, count]) => {
+                      const emoji = rating === '3' ? '😀' : rating === '2' ? '😐' : '😔';
+                      return (
+                        <div key={rating} className="flex items-center">
+                          <div className="w-20 text-sm font-medium flex items-center">
+                            {emoji}
+                          </div>
+                          <div className="w-[60%] mx-2">
+                            <div className="h-6 bg-gray-100 rounded-full overflow-hidden shadow-inner">
+                              <div 
+                                className="h-full bg-gradient-to-r from-yellow-400 to-amber-500 shadow-sm" 
+                                style={{ 
+                                  width: `${(count / feedbackStats.totalFeedbackCount) * 100}%`,
+                                  transition: 'width 1s ease-in-out' 
+                                }} 
+                              />
+                            </div>
+                          </div>
+                          <div className="text-sm font-medium w-10 text-right">{count}</div>
                         </div>
-                      </div>
-                      <div className="text-sm font-medium w-10 text-right">{count}</div>
-                    </div>
-                  ))}
+                      );
+                    })}
                 </div>
               ) : (
                 <div className="text-center text-gray-500">No feedback data available</div>

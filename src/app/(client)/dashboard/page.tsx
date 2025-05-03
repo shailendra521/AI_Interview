@@ -229,10 +229,6 @@ function Interviews() {
                 </TabsTrigger>
               </TabsList>
             </Tabs>
-            
-            <button className="text-primary text-sm font-medium flex items-center hover:text-primary/80 transition-colors">
-              View All <ChevronRight className="w-4 h-4 ml-1" />
-            </button>
           </div>
         </div>
         
@@ -265,6 +261,7 @@ function Interviews() {
                     readableSlug={item.readable_slug}
                     interviewer={interviewers[item.interviewer_id.toString()]}
                     viewMode={viewMode}
+                    createdAt={item.created_at}
                   />
                 </div>
               ))}
