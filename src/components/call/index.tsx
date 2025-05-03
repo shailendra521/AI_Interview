@@ -5,6 +5,13 @@ import {
   AlarmClockIcon,
   XCircleIcon,
   CheckCircleIcon,
+  AlertTriangleIcon,
+  InfoIcon,
+  BellIcon,
+  ShieldAlertIcon,
+  SmartphoneIcon,
+  BanIcon,
+  AlertOctagonIcon,
 } from "lucide-react";
 import React, { useState, useEffect, useRef } from "react";
 import { Card, CardHeader, CardTitle } from "../ui/card";
@@ -58,6 +65,43 @@ type transcriptType = {
   content: string;
 };
 
+// Add interface for warnings response
+interface WarningsResponse {
+  warnings: string[];
+}
+
+const SpeakingEffect = () => (
+  <div className="absolute -inset-1">
+    <div className="absolute inset-0 rounded-full animate-ping bg-indigo-400 opacity-20"></div>
+    <div className="absolute inset-0 rounded-full animate-pulse bg-indigo-400 opacity-30"></div>
+    <div className="absolute -inset-2">
+      <div className="w-full h-full rounded-full animate-ping-slow bg-indigo-400 opacity-10"></div>
+    </div>
+  </div>
+);
+
+const ToastMessage = ({ 
+  message, 
+  icon, 
+  severity = 'normal' 
+}: { 
+  message: string; 
+  icon: React.ReactNode;
+  severity?: 'normal' | 'high';
+}) => (
+  <div className={`flex items-center gap-3 min-w-[300px] font-medium ${
+    severity === 'high' ? 'animate-pulse' : ''
+  }`}>
+    <div className="flex-shrink-0 relative">
+      {severity === 'high' && (
+        <div className="absolute inset-0 animate-ping rounded-full bg-current opacity-25" />
+      )}
+      {icon}
+    </div>
+    <span className="flex-1">{message}</span>
+  </div>
+);
+
 function Call({ interview }: InterviewProps) {
   const { createResponse } = useResponses();
   const [lastInterviewerResponse, setLastInterviewerResponse] =
@@ -81,30 +125,19 @@ function Call({ interview }: InterviewProps) {
     useState<string>("1");
   const [time, setTime] = useState(0);
   const [currentTimeDuration, setCurrentTimeDuration] = useState<string>("0");
+  const [warnings, setWarnings] = useState<string[]>([]);
+  const [isWebcamActive, setIsWebcamActive] = useState(false);
+  const [webcamError, setWebcamError] = useState(false);
 
   const lastUserResponseRef = useRef<HTMLDivElement | null>(null);
 
-  const handleFeedbackSubmit = async (
-    formData: Omit<FeedbackData, "interview_id">,
-  ) => {
-    try {
-      const result = await FeedbackService.submitFeedback({
-        ...formData,
-        interview_id: interview.id,
-      });
-
-      if (result) {
-        toast.success("Thank you for your feedback!");
-        setIsFeedbackSubmitted(true);
-        setIsDialogOpen(false);
-      } else {
-        toast.error("Failed to submit feedback. Please try again.");
-      }
-    } catch (error) {
-      console.error("Error submitting feedback:", error);
-      toast.error("An error occurred. Please try again later.");
-    }
-  };
+  // Add this at the start of your component to configure Sonner
+  useEffect(() => {
+    // Configure global toast settings
+    toast.success = (message, options) => toast(message, { ...options, position: "bottom-right" });
+    toast.error = (message, options) => toast(message, { ...options, position: "bottom-right" });
+    toast.warning = (message, options) => toast(message, { ...options, position: "bottom-right" });
+  }, []);
 
   useEffect(() => {
     if (lastUserResponseRef.current) {
@@ -114,9 +147,54 @@ function Call({ interview }: InterviewProps) {
   }, [lastUserResponse]);
 
   useEffect(() => {
+    let interval: NodeJS.Timeout;
+
+    if (isCalling && isStarted) {
+      setIsWebcamActive(true);
+      interval = setInterval(() => {
+        fetch("http://localhost:5000/warnings")
+          .then((res) => res.json())
+          .then((data: WarningsResponse) => {
+            if (data?.warnings) {
+              const newWarnings = data.warnings;
+              setWarnings(prev => {
+                newWarnings.forEach(warning => {
+                  if (!prev.includes(warning)) {
+                    toast(warning, {
+                      id: warning,
+                    });
+                  }
+                });
+                return newWarnings;
+              });
+            }
+          })
+          .catch((err) => {
+            console.error("Failed to fetch warnings:", err);
+            toast.error("Failed to monitor exam activity");
+          });
+      }, 1000);
+    }
+
+    return () => {
+      if (interval) {
+        clearInterval(interval);
+      }
+      if (isWebcamActive) {
+        fetch("http://localhost:5000/stop")
+          .then((res) => res.json())
+          .then((data) => {
+            console.log(data.message);
+            setIsWebcamActive(false);
+          })
+          .catch((err) => console.error("Failed to stop monitoring:", err));
+      }
+    };
+  }, [isCalling, isStarted, isWebcamActive]);
+
+  useEffect(() => {
     let intervalId: any;
     if (isCalling) {
-      // setting time from 0 to 1 every 10 milisecond using javascript setInterval method
       intervalId = setInterval(() => setTime(time + 1), 10);
     }
     setCurrentTimeDuration(String(Math.floor(time / 100)));
@@ -126,7 +204,6 @@ function Call({ interview }: InterviewProps) {
     }
 
     return () => clearInterval(intervalId);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isCalling, time, currentTimeDuration]);
 
   useEffect(() => {
@@ -152,7 +229,6 @@ function Call({ interview }: InterviewProps) {
     });
 
     webClient.on("agent_stop_talking", () => {
-      // Optional: Add any logic when agent stops talking
       setActiveTurn("user");
     });
 
@@ -175,11 +251,9 @@ function Call({ interview }: InterviewProps) {
         setLastInterviewerResponse(roleContents["agent"]);
         setLastUserResponse(roleContents["user"]);
       }
-      //TODO: highlight the newly uttered word in the UI
     });
 
     return () => {
-      // Clean up event listeners
       webClient.removeAllListeners();
     };
   }, []);
@@ -187,8 +261,19 @@ function Call({ interview }: InterviewProps) {
   const onEndCallClick = async () => {
     if (isStarted) {
       setLoading(true);
-      webClient.stopCall();
-      setIsEnded(true);
+      try {
+        await fetch("http://localhost:5000/stop")
+          .then((res) => res.json())
+          .then((data) => console.log(data.message))
+          .catch((err) => console.error("Failed to stop monitoring:", err));
+
+        webClient.stopCall();
+        setIsEnded(true);
+        setIsWebcamActive(false);
+      } catch (error) {
+        console.error("Error ending call:", error);
+        toast.error("Failed to end interview properly");
+      }
       setLoading(false);
     } else {
       setIsEnded(true);
@@ -258,7 +343,6 @@ function Call({ interview }: InterviewProps) {
       setInterviewerImg(interviewer.image);
     };
     fetchInterviewer();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [interview.interviewer_id]);
 
   useEffect(() => {
@@ -272,302 +356,439 @@ function Call({ interview }: InterviewProps) {
 
       updateInterview();
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isEnded]);
+
+  const WebcamComponent = () => {
+    return (
+      <div className="relative w-full max-w-[800px] aspect-[16/9]">
+        {!webcamError ? (
+          <img
+            src="http://localhost:5000/video_feed"
+            alt="Webcam Feed"
+            className="rounded-2xl shadow-lg w-full h-full object-cover border border-gray-200"
+            onError={() => {
+              setWebcamError(true);
+              toast.error(
+                <ToastMessage 
+                  message="Failed to connect to webcam. Please ensure the monitoring server is running."
+                  icon={<AlertOctagonIcon className="h-5 w-5 text-red-600 stroke-[2]" />}
+                />,
+                {
+                  className: "bg-red-50 border-l-4 border-red-500",
+                  duration: 5000,
+                  style: {
+                    marginBottom: '0.5rem',
+                  }
+                }
+              );
+            }}
+          />
+        ) : (
+          <div className="w-full h-full flex items-center justify-center bg-gray-50 rounded-2xl border border-gray-200">
+            <div className="text-center">
+              <p className="text-red-500 mb-2 text-lg">⚠️ Webcam not available</p>
+              <button
+                className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors shadow-md"
+                onClick={() => {
+                  setWebcamError(false);
+                }}
+              >
+                Retry Connection
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  };
+
+  const handleFeedbackSubmit = async (formData: Omit<FeedbackData, "interview_id">) => {
+    try {
+      const result = await FeedbackService.submitFeedback({
+        ...formData,
+        interview_id: interview.id,
+      });
+
+      if (result) {
+        toast.success(
+          <ToastMessage 
+            message="Thank you for your feedback!"
+            icon={<CheckCircleIcon className="h-5 w-5 text-green-600 stroke-[2]" />}
+          />,
+          {
+            className: "bg-green-50 border-l-4 border-green-500",
+            duration: 3000,
+            style: {
+              marginBottom: '0.5rem',
+            }
+          }
+        );
+        setIsFeedbackSubmitted(true);
+        setIsDialogOpen(false);
+      } else {
+        toast.error(
+          <ToastMessage 
+            message="Failed to submit feedback. Please try again."
+            icon={<AlertOctagonIcon className="h-5 w-5 text-red-600 stroke-[2]" />}
+          />,
+          {
+            className: "bg-red-50 border-l-4 border-red-500",
+            duration: 5000,
+            style: {
+              marginBottom: '0.5rem',
+            }
+          }
+        );
+      }
+    } catch (error) {
+      console.error("Error submitting feedback:", error);
+      toast.error(
+        <ToastMessage 
+          message="An error occurred. Please try again later."
+          icon={<AlertOctagonIcon className="h-5 w-5 text-red-600 stroke-[2]" />}
+        />,
+        {
+          className: "bg-red-50 border-l-4 border-red-500",
+          duration: 5000,
+          style: {
+            marginBottom: '0.5rem',
+          }
+        }
+      );
+    }
+  };
+
+  useEffect(() => {
+    if (warnings?.length > 0) {
+      warnings.forEach((warning, index) => {
+        const isPhoneWarning = warning.toLowerCase().includes('phone') || 
+                              warning.toLowerCase().includes('cell') || 
+                              warning.toLowerCase().includes('mobile');
+        
+        if (isPhoneWarning) {
+          // Modern icon for phone detection
+          toast.error(
+            <ToastMessage 
+              message={warning}
+              icon={
+                <div className="relative">
+                  <SmartphoneIcon className="h-6 w-6 text-red-600 stroke-[2.5]" />
+                  <BanIcon className="h-4 w-4 absolute -top-1 -right-1 text-red-600 stroke-[2.5]" />
+                </div>
+              }
+              severity="high"
+            />,
+            {
+              id: `phone-warning-${index}`,
+              className: "bg-red-100 border-l-8 border-red-600",
+              duration: 8000,
+              position: "bottom-right",
+              style: {
+                marginBottom: '0.5rem',
+              }
+            }
+          );
+        } else {
+          // Modern icon for general warnings
+          toast.warning(
+            <ToastMessage 
+              message={warning}
+              icon={<ShieldAlertIcon className="h-5 w-5 text-yellow-600 stroke-[2]" />}
+            />,
+            {
+              id: `warning-${index}`,
+              className: "bg-yellow-50 border-l-4 border-yellow-500",
+              duration: 4000,
+              position: "bottom-right",
+              style: {
+                marginBottom: '0.5rem',
+              }
+            }
+          );
+        }
+      });
+    }
+  }, [warnings]);
 
   return (
     <div className="flex justify-center items-center min-h-screen bg-gray-100">
       {isStarted && <TabSwitchWarning />}
-      <div className="bg-white rounded-md md:w-[80%] w-[90%]">
-        <Card className="h-[88vh] rounded-lg border-2 border-b-4 border-r-4 border-black text-xl font-bold transition-all  md:block dark:border-white ">
-          <div>
-            <div className="m-4 h-[15px] rounded-lg border-[1px]  border-black">
-              <div
-                className=" bg-indigo-600 h-[15px] rounded-lg"
-                style={{
-                  width: isEnded
-                    ? "100%"
-                    : `${
-                        (Number(currentTimeDuration) /
-                          (Number(interviewTimeDuration) * 60)) *
-                        100
-                      }%`,
-                }}
-              />
+      <div className="bg-white rounded-3xl md:w-[85%] w-[95%] shadow-lg relative">
+        {/* Fixed Exit Button */}
+        {isStarted && !isEnded && !isOldUser && (
+          <div className="fixed top-6 right-12 z-50">
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button
+                  className="bg-red-600 hover:bg-red-700 text-white rounded-full flex items-center gap-2 transition-all duration-300 group overflow-hidden"
+                  disabled={Loading}
+                >
+                  <XCircleIcon className="h-5 w-5 flex-shrink-0" />
+                  <span className="max-w-0 overflow-hidden whitespace-nowrap group-hover:max-w-[100px] transition-all duration-300 ease-in-out">
+                    Exit Interview
+                  </span>
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    This action cannot be undone. This action will end the call.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                  <AlertDialogAction
+                    className="bg-red-600 hover:bg-red-700"
+                    onClick={async () => {
+                      await onEndCallClick();
+                    }}
+                  >
+                    Continue
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+          </div>
+        )}
+
+        <Card className="h-[90vh] rounded-3xl border border-gray-200 text-xl font-bold transition-all md:block">
+          <div className="flex flex-col h-full">
+            {/* Progress bar */}
+            <div className="px-6 pt-4">
+              <div className="h-[6px] rounded-full border-[1px] border-gray-200 bg-gray-50">
+                <div
+                  className="bg-indigo-600 h-full rounded-full transition-all duration-300"
+                  style={{
+                    width: isEnded
+                      ? "100%"
+                      : `${(Number(currentTimeDuration) / (Number(interviewTimeDuration) * 60)) * 100}%`,
+                  }}
+                />
+              </div>
             </div>
-            <CardHeader className="items-center p-1">
-              {!isEnded && (
-                <CardTitle className="flex flex-row items-center text-lg md:text-xl font-bold mb-2">
+
+            {/* Header */}
+            <div className="px-6 py-3">
+              <CardTitle className="flex items-center justify-between">
+                <div className="text-xl md:text-2xl font-bold">
                   {interview?.name}
-                </CardTitle>
-              )}
-              {!isEnded && (
-                <div className="flex mt-2 flex-row">
-                  <AlarmClockIcon
-                    className="text-indigo-600 h-[1rem] w-[1rem] rotate-0 scale-100  dark:-rotate-90 dark:scale-0 mr-2 font-bold"
-                    style={{ color: interview.theme_color }}
-                  />
-                  <div className="text-sm font-normal">
-                    Expected duration:{" "}
-                    <span
-                      className="font-bold"
-                      style={{ color: interview.theme_color }}
-                    >
-                      {interviewTimeDuration} mins{" "}
-                    </span>
-                    or less
-                  </div>
                 </div>
-              )}
-            </CardHeader>
+                <div className="flex items-center text-sm font-normal text-gray-600">
+                  <AlarmClockIcon className="w-4 h-4 mr-1" />
+                  Expected duration: <span className="font-semibold ml-1">{interviewTimeDuration} mins</span> or less
+                </div>
+              </CardTitle>
+            </div>
+
+            {/* Initial Form */}
             {!isStarted && !isEnded && !isOldUser && (
-              <div className="w-fit min-w-[400px] max-w-[400px] mx-auto mt-2  border border-indigo-200 rounded-md p-2 m-2 bg-slate-50">
-                <div>
+              <div className="flex-1 flex items-center justify-center px-6">
+                <div className="w-full max-w-md bg-white rounded-2xl border border-gray-100 shadow-sm p-8">
                   {interview?.logo_url && (
-                    <div className="p-1 flex justify-center">
+                    <div className="flex justify-center mb-6">
                       <Image
                         src={interview?.logo_url}
                         alt="Logo"
-                        className="h-10 w-auto"
+                        className="h-12 w-auto"
                         width={100}
-                        height={100}
+                        height={48}
                       />
                     </div>
                   )}
-                  <div className="p-2 font-normal text-sm mb-4 whitespace-pre-line">
+                  
+                  <div className="text-gray-700 text-sm mb-6 whitespace-pre-line">
                     {interview?.description}
-                    <p className="font-bold text-sm">
-                      {"\n"}Ensure your volume is up and grant microphone access
-                      when prompted. Additionally, please make sure you are in a
-                      quiet environment.
-                      {"\n\n"}Note: Tab switching will be recorded.
+                    <p className="mt-4 text-sm font-medium text-gray-900">
+                      Please ensure:
+                      <ul className="mt-2 list-disc list-inside space-y-1 text-gray-600">
+                        <li>Your volume is turned up</li>
+                        <li>You grant microphone access when prompted</li>
+                        <li>You are in a quiet environment</li>
+                      </ul>
+                    </p>
+                    <p className="mt-4 text-xs text-gray-500">
+                      Note: Tab switching will be recorded
                     </p>
                   </div>
+
                   {!interview?.is_anonymous && (
-                    <div className="flex flex-col gap-2 justify-center">
-                      <div className="flex justify-center">
-                        <input
-                          value={email}
-                          className="h-fit mx-auto py-2 border-2 rounded-md w-[75%] self-center px-2 border-gray-400 text-sm font-normal"
-                          placeholder="Enter your email address"
-                          onChange={(e) => setEmail(e.target.value)}
-                        />
-                      </div>
-                      <div className="flex justify-center">
-                        <input
-                          value={name}
-                          className="h-fit mb-4 mx-auto py-2 border-2 rounded-md w-[75%] self-center px-2 border-gray-400 text-sm font-normal"
-                          placeholder="Enter your first name"
-                          onChange={(e) => setName(e.target.value)}
-                        />
-                      </div>
+                    <div className="space-y-4 mb-6">
+                      <input
+                        value={email}
+                        className="w-full px-4 py-2 rounded-xl border border-gray-200 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition-all"
+                        placeholder="Enter your email address"
+                        onChange={(e) => setEmail(e.target.value)}
+                      />
+                      <input
+                        value={name}
+                        className="w-full px-4 py-2 rounded-xl border border-gray-200 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition-all"
+                        placeholder="Enter your first name"
+                        onChange={(e) => setName(e.target.value)}
+                      />
                     </div>
                   )}
-                </div>
-                <div className="w-[80%] flex flex-row mx-auto justify-center items-center align-middle">
-                  <Button
-                    className="min-w-20 h-10 rounded-lg flex flex-row justify-center mb-8"
-                    style={{
-                      backgroundColor: interview.theme_color ?? "#4F46E5",
-                      color: isLightColor(interview.theme_color ?? "#4F46E5")
-                        ? "black"
-                        : "white",
-                    }}
-                    disabled={
-                      Loading ||
-                      (!interview?.is_anonymous && (!isValidEmail || !name))
-                    }
-                    onClick={startConversation}
-                  >
-                    {!Loading ? "Start Interview" : <MiniLoader />}
-                  </Button>
-                  <AlertDialog>
-                    <AlertDialogTrigger>
-                      <Button
-                        className="bg-white border ml-2 text-black min-w-15 h-10 rounded-lg flex flex-row justify-center mb-8"
-                        style={{ borderColor: interview.theme_color }}
-                        disabled={Loading}
-                      >
-                        Exit
-                      </Button>
-                    </AlertDialogTrigger>
-                    <AlertDialogContent>
-                      <AlertDialogHeader>
-                        <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-                      </AlertDialogHeader>
-                      <AlertDialogFooter>
-                        <AlertDialogCancel>Cancel</AlertDialogCancel>
-                        <AlertDialogAction
-                          className="bg-indigo-600 hover:bg-indigo-800"
-                          onClick={async () => {
-                            await onEndCallClick();
-                          }}
-                        >
-                          Continue
-                        </AlertDialogAction>
-                      </AlertDialogFooter>
-                    </AlertDialogContent>
-                  </AlertDialog>
+
+                  <div className="flex gap-3">
+                    <Button
+                      className="flex-1 py-2 rounded-xl text-white font-medium transition-all"
+                      style={{
+                        backgroundColor: interview.theme_color ?? "#4F46E5",
+                        color: isLightColor(interview.theme_color ?? "#4F46E5")
+                          ? "black"
+                          : "white",
+                      }}
+                      disabled={Loading || (!interview?.is_anonymous && (!isValidEmail || !name))}
+                      onClick={startConversation}
+                    >
+                      {!Loading ? "Start Interview" : <MiniLoader />}
+                    </Button>
+                  </div>
                 </div>
               </div>
             )}
+
+            {/* Interview Content */}
             {isStarted && !isEnded && !isOldUser && (
-              <div className="flex flex-row p-2 grow">
-                <div className="border-x-2 border-grey w-[50%] my-auto min-h-[70%]">
-                  <div className="flex flex-col justify-evenly">
-                    <div
-                      className={`text-[22px] w-[80%] md:text-[26px] mt-4 min-h-[250px] mx-auto px-6`}
-                    >
+              <div className="flex-1 px-6 pb-6">
+                <div className="flex w-full gap-6 h-full">
+                  {/* Left side - Interviewer */}
+                  <div className="w-[40%] flex flex-col">
+                    <div className="flex-grow mb-4 text-[22px] md:text-[26px] overflow-y-auto">
                       {lastInterviewerResponse}
                     </div>
-                    <div className="flex flex-col mx-auto justify-center items-center align-middle">
-                      <Image
-                        src={interviewerImg}
-                        alt="Image of the interviewer"
-                        width={120}
-                        height={120}
-                        className={`object-cover object-center mx-auto my-auto ${
-                          activeTurn === "agent"
-                            ? `border-4 border-[${interview.theme_color}] rounded-full`
-                            : ""
-                        }`}
-                      />
-                      <div className="font-semibold">Interviewer</div>
+                    <div className="flex flex-col items-center">
+                      <div className="relative">
+                        {activeTurn === "agent" && <SpeakingEffect />}
+                        <Image
+                          src={interviewerImg}
+                          alt="Image of the interviewer"
+                          width={100}
+                          height={100}
+                          className={`rounded-full object-cover relative ${
+                            activeTurn === "agent" ? "ring-4 ring-indigo-400 ring-opacity-50" : ""
+                          }`}
+                        />
+                      </div>
+                      <div className="font-semibold mt-2">Interviewer</div>
+                    </div>
+                  </div>
+
+                  {/* Right side - User */}
+                  <div className="w-[60%] flex flex-col h-full">
+                    {/* Fixed Video Section */}
+                    <div className="sticky top-0 bg-white pt-4 pb-6 z-10">
+                      <div className="flex flex-col items-center">
+                        <WebcamComponent />
+                        <div className="font-semibold mt-2">You</div>
+                      </div>
+                    </div>
+
+                    {/* Scrollable Transcript Section */}
+                    <div className="flex-1 overflow-y-auto">
+                      <div
+                        ref={lastUserResponseRef}
+                        className="text-[22px] md:text-[26px] pr-4"
+                      >
+                        {lastUserResponse}
+                      </div>
                     </div>
                   </div>
                 </div>
-
-                <div className="flex flex-col justify-evenly w-[50%]">
-                  <div
-                    ref={lastUserResponseRef}
-                    className={`text-[22px] w-[80%] md:text-[26px] mt-4 mx-auto h-[250px] px-6 overflow-y-auto`}
-                  >
-                    {lastUserResponse}
-                  </div>
-                  <div className="flex flex-col mx-auto justify-center items-center align-middle">
-                    <Image
-                      src={`/user-icon.png`}
-                      alt="Picture of the user"
-                      width={120}
-                      height={120}
-                      className={`object-cover object-center mx-auto my-auto ${
-                        activeTurn === "user"
-                          ? `border-4 border-[${interview.theme_color}] rounded-full`
-                          : ""
-                      }`}
-                    />
-                    <div className="font-semibold">You</div>
-                  </div>
-                </div>
-              </div>
-            )}
-            {isStarted && !isEnded && !isOldUser && (
-              <div className="items-center p-2">
-                <AlertDialog>
-                  <AlertDialogTrigger className="w-full">
-                    <Button
-                      className=" bg-white text-black border  border-indigo-600 h-10 mx-auto flex flex-row justify-center mb-8"
-                      disabled={Loading}
-                    >
-                      End Interview{" "}
-                      <XCircleIcon className="h-[1.5rem] ml-2 w-[1.5rem] rotate-0 scale-100  dark:-rotate-90 dark:scale-0 text-red" />
-                    </Button>
-                  </AlertDialogTrigger>
-                  <AlertDialogContent>
-                    <AlertDialogHeader>
-                      <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-                      <AlertDialogDescription>
-                        This action cannot be undone. This action will end the
-                        call.
-                      </AlertDialogDescription>
-                    </AlertDialogHeader>
-                    <AlertDialogFooter>
-                      <AlertDialogCancel>Cancel</AlertDialogCancel>
-                      <AlertDialogAction
-                        className="bg-indigo-600 hover:bg-indigo-800"
-                        onClick={async () => {
-                          await onEndCallClick();
-                        }}
-                      >
-                        Continue
-                      </AlertDialogAction>
-                    </AlertDialogFooter>
-                  </AlertDialogContent>
-                </AlertDialog>
               </div>
             )}
 
+            {/* Thank You Screen */}
             {isEnded && !isOldUser && (
-              <div className="w-fit min-w-[400px] max-w-[400px] mx-auto mt-2  border border-indigo-200 rounded-md p-2 m-2 bg-slate-50  absolute -translate-x-1/2 -translate-y-1/2 top-1/2 left-1/2">
-                <div>
-                  <div className="p-2 font-normal text-base mb-4 whitespace-pre-line">
-                    <CheckCircleIcon className="h-[2rem] w-[2rem] mx-auto my-4 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0 text-indigo-500 " />
-                    <p className="text-lg font-semibold text-center">
-                      {isStarted
-                        ? `Thank you for taking the time to participate in this interview`
-                        : "Thank you very much for considering."}
-                    </p>
-                    <p className="text-center">
-                      {"\n"}
-                      You can close this tab now.
-                    </p>
+              <div className="flex-1 flex items-center justify-center bg-gradient-to-b from-white to-indigo-50/30">
+                <div className="text-center max-w-2xl mx-auto px-6">
+                  <div className="mb-8 transform animate-bounce">
+                    <CheckCircleIcon className="h-16 w-16 mx-auto text-indigo-500" />
                   </div>
+                  <div className="space-y-6">
+                    <div>
+                      <h3 className="text-3xl font-bold mb-3 bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 to-violet-500">
+                        {isStarted
+                          ? "Thank you for completing the interview!"
+                          : "Thank you for considering."}
+                      </h3>
+                      <p className="text-gray-600 text-lg">
+                        Your participation is valuable to us. We appreciate your time and effort.
+                      </p>
+                    </div>
 
-                  {!isFeedbackSubmitted && (
-                    <AlertDialog
-                      open={isDialogOpen}
-                      onOpenChange={setIsDialogOpen}
-                    >
-                      <AlertDialogTrigger className="w-full flex justify-center">
-                        <Button
-                          className="bg-indigo-600 text-white h-10 mt-4 mb-4"
-                          onClick={() => setIsDialogOpen(true)}
-                        >
-                          Provide Feedback
-                        </Button>
-                      </AlertDialogTrigger>
-                      <AlertDialogContent>
-                        <FeedbackForm
-                          email={email}
-                          onSubmit={handleFeedbackSubmit}
-                        />
-                      </AlertDialogContent>
-                    </AlertDialog>
-                  )}
+                    {!isFeedbackSubmitted && (
+                      <div className="mt-8">
+                        <p className="text-gray-600 mb-4">
+                          Before you go, would you like to share your experience?
+                        </p>
+                        <AlertDialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+                          <AlertDialogTrigger asChild>
+                            <Button
+                              className="bg-white hover:bg-indigo-50 text-indigo-600 border-2 border-indigo-200 px-8 py-4 rounded-2xl text-lg font-medium transition-all duration-300 hover:shadow-lg hover:border-indigo-300 hover:scale-105"
+                              onClick={() => setIsDialogOpen(true)}
+                            >
+                              Provide Feedback
+                            </Button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent className="max-w-2xl">
+                            <FeedbackForm email={email} onSubmit={handleFeedbackSubmit} />
+                          </AlertDialogContent>
+                        </AlertDialog>
+                      </div>
+                    )}
+
+                    {isFeedbackSubmitted && (
+                      <div className="mt-4 text-green-600 flex items-center justify-center gap-2">
+                        <CheckCircleIcon className="h-5 w-5" />
+                        <span>Thank you for your feedback!</span>
+                      </div>
+                    )}
+
+                    <div className="mt-8 pt-8 border-t border-gray-100">
+                      <p className="text-gray-500 text-sm">
+                        You can safely close this tab now.
+                      </p>
+                    </div>
+                  </div>
                 </div>
               </div>
             )}
+
+            {/* Already Responded Screen */}
             {isOldUser && (
-              <div className="w-fit min-w-[400px] max-w-[400px] mx-auto mt-2  border border-indigo-200 rounded-md p-2 m-2 bg-slate-50  absolute -translate-x-1/2 -translate-y-1/2 top-1/2 left-1/2">
-                <div>
-                  <div className="p-2 font-normal text-base mb-4 whitespace-pre-line">
-                    <CheckCircleIcon className="h-[2rem] w-[2rem] mx-auto my-4 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0 text-indigo-500 " />
-                    <p className="text-lg font-semibold text-center">
-                      You have already responded in this interview or you are
-                      not eligible to respond. Thank you!
+              <div className="flex-1 flex items-center justify-center bg-gradient-to-b from-white to-red-50/30">
+                <div className="text-center max-w-2xl mx-auto px-6">
+                  <XCircleIcon className="h-16 w-16 mx-auto mb-6 text-red-500" />
+                  <div className="space-y-4">
+                    <h3 className="text-2xl font-bold text-gray-900">
+                      Already Participated
+                    </h3>
+                    <p className="text-gray-600 text-lg">
+                      It looks like you have already participated in this interview or are not eligible to respond.
                     </p>
-                    <p className="text-center">
-                      {"\n"}
-                      You can close this tab now.
-                    </p>
+                    <div className="mt-8 pt-6 border-t border-gray-100">
+                      <p className="text-gray-500">
+                        You can safely close this tab now.
+                      </p>
+                    </div>
                   </div>
                 </div>
               </div>
             )}
           </div>
         </Card>
+
+        {/* Footer */}
         <a
-          className="flex flex-row justify-center align-middle mt-3"
-          href="https://hrone.cloud/"
+          className="flex justify-center items-center gap-2 py-3 text-gray-600 hover:text-gray-900 transition-colors"
+          href="https://folo-up.co/"
           target="_blank"
         >
-          <div className="text-center text-md font-semibold mr-2  ">
-            Powered by{" "}
-            <span className="font-bold">
-              Talent<span className="text-indigo-600">AI</span>
-            </span>
-          </div>
-          <ArrowUpRightSquareIcon className="h-[1.5rem] w-[1.5rem] rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0 text-indigo-500 " />
+          <span className="font-medium">
+            Powered by <span className="font-bold">Talent<span className="text-indigo-600">AI</span></span>
+          </span>
+          <ArrowUpRightSquareIcon className="h-5 w-5" />
         </a>
       </div>
     </div>
