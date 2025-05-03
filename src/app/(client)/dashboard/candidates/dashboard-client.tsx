@@ -47,7 +47,8 @@ export default function CandidatesDashboardClient({
 
   const formatDuration = (seconds: number) => {
     const minutes = Math.floor(seconds / 60);
-    return `${minutes} min`;
+    const remainingSeconds = Math.round(seconds % 60);
+    return `${minutes}m ${remainingSeconds.toString().padStart(2, '0')}s`;
   };
 
   // Helper function to safely format dates in a consistent way
@@ -55,7 +56,8 @@ export default function CandidatesDashboardClient({
     if (!isClient) return ''; // Return empty string on server to avoid hydration mismatch
     try {
       const date = new Date(dateString);
-      return date.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+      const options = { month: 'short', day: 'numeric' } as const;
+      return date.toLocaleDateString(undefined, options);
     } catch (e) {
       return '';
     }
