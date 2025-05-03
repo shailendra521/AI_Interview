@@ -3,7 +3,7 @@ import Image from "next/image";
 import { Card, CardContent, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import { Copy, ArrowUpRight, Mail, Users, Award, Star, Calendar } from "lucide-react";
+import { Copy, ArrowUpRight, Mail, Users, Calendar } from "lucide-react";
 import { CopyCheck } from "lucide-react";
 import { ResponseService } from "@/services/responses.service";
 import axios from "axios";
@@ -30,7 +30,6 @@ function InterviewCard({ name, interviewerId, id, url, readableSlug, interviewer
   const [img, setImg] = useState("");
   const [isEmailPopupOpen, setIsEmailPopupOpen] = useState(false);
   const [createdAt, setCreatedAt] = useState<string>("");
-  const [hasAwards, setHasAwards] = useState<boolean>(false);
 
   useEffect(() => {
     // If interviewer is provided, use it directly
@@ -59,9 +58,6 @@ function InterviewCard({ name, interviewerId, id, url, readableSlug, interviewer
       try {
         const responses = await ResponseService.getAllResponses(id);
         setResponseCount(responses.length);
-        
-        // Set hasAwards based on responses (mock logic - this would be replaced with real criteria)
-        setHasAwards(responses.length > 5);
         
         // Set creation date (mock data - would be replaced with actual data)
         setCreatedAt(new Date(Date.now() - Math.random() * 30 * 24 * 60 * 60 * 1000).toISOString());
@@ -152,16 +148,11 @@ function InterviewCard({ name, interviewerId, id, url, readableSlug, interviewer
           }}
         >
           <Card 
-            className={`relative p-4 border-slate-200 hover:shadow-md transition-all duration-300 ${isFetching ? "opacity-80" : ""} ${hasAwards ? "border-amber-200 bg-amber-50/30" : ""}`}
+            className={`relative p-4 border-slate-200 hover:shadow-md transition-all duration-300 ${isFetching ? "opacity-80" : ""}`}
           >
             <div className="flex items-center gap-4">
               <div className="flex-shrink-0">
                 <div className="relative w-16 h-16 rounded-lg overflow-hidden bg-gradient-to-br from-primary/90 to-blue-600 shadow-sm">
-                  {hasAwards && (
-                    <div className="absolute top-0 right-0 w-6 h-6 bg-amber-500 flex items-center justify-center rounded-bl-lg z-10">
-                      <Award size={14} className="text-white" />
-                    </div>
-                  )}
                   <div className="absolute inset-0 flex items-center justify-center">
                     <span className="text-white font-bold text-sm">{name?.substring(0, 2).toUpperCase()}</span>
                   </div>
@@ -171,9 +162,6 @@ function InterviewCard({ name, interviewerId, id, url, readableSlug, interviewer
               <div className="flex-grow">
                 <div className="flex items-center gap-2">
                   <h3 className="font-semibold text-slate-800">{name}</h3>
-                  {hasAwards && (
-                    <span className="bg-amber-100 text-amber-700 text-xs px-2 py-0.5 rounded-full">Award Winning</span>
-                  )}
                 </div>
                 
                 <div className="flex items-center gap-3 mt-1 text-sm text-slate-500">
@@ -262,16 +250,10 @@ function InterviewCard({ name, interviewerId, id, url, readableSlug, interviewer
         }}
       >
         <Card 
-          className={`relative p-0 h-64 w-64 rounded-xl shrink-0 overflow-hidden border-slate-200 hover:shadow-md transition-all duration-300 ${isFetching ? "opacity-80" : ""} ${hasAwards ? "border-amber-200" : ""}`}
+          className={`relative p-0 h-64 w-64 rounded-xl shrink-0 overflow-hidden border-slate-200 hover:shadow-md transition-all duration-300 ${isFetching ? "opacity-80" : ""}`}
         >
           <CardContent className="p-0 h-full flex flex-col">
             <div className="w-full h-32 overflow-hidden bg-gradient-to-r from-primary to-blue-500 flex items-center justify-center relative">
-              {hasAwards && (
-                <div className="absolute top-2 right-2 bg-amber-500 text-white text-xs rounded-full px-2 py-0.5 flex items-center gap-1 shadow-md">
-                  <Award size={12} className="text-white" />
-                  <span>Award Winning</span>
-                </div>
-              )}
               <CardTitle className="text-white text-xl font-bold px-4 text-center">
                 {name}
                 {isFetching && (

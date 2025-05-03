@@ -163,11 +163,11 @@ function DetailsPopup({
 
   return (
     <TooltipProvider>
-      <div className="bg-white rounded-xl shadow-lg p-5 w-full max-w-2xl overflow-hidden">
-        <div className="max-h-[80vh] overflow-y-auto pr-1 -mr-1">
-          <h1 className="text-2xl font-bold text-center mb-6 text-gray-800">Create an Interview</h1>
+      <div className="bg-white rounded-xl shadow-lg p-3 sm:p-5 w-[95vw] sm:w-full max-w-2xl mx-auto">
+        <div className="max-h-[85vh] sm:max-h-[80vh] overflow-y-auto pr-1 -mr-1">
+          <h1 className="text-xl sm:text-2xl font-bold text-center mb-4 sm:mb-6 text-gray-800">Create an Interview</h1>
           
-          <div className="space-y-5">
+          <div className="space-y-4 sm:space-y-5">
             {/* Interview Name Section */}
             <div className="space-y-2">
               <Label htmlFor="interviewName" className="text-sm font-medium">
@@ -176,7 +176,7 @@ function DetailsPopup({
               <Input
                 id="interviewName"
                 type="text"
-                className="w-full border-gray-300 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition-all"
+                className="w-full border-gray-300 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition-all text-sm sm:text-base"
                 placeholder="e.g. Frontend Developer Interview"
                 value={name}
                 onChange={(e: ChangeEvent<HTMLInputElement>) => setName(e.target.value)}
@@ -191,7 +191,7 @@ function DetailsPopup({
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <Button variant="ghost" className="p-0 h-auto ml-2">
-                      <HelpCircle size={16} className="text-gray-400" />
+                      <HelpCircle size={14} className="text-gray-400" />
                     </Button>
                   </TooltipTrigger>
                   <TooltipContent>
@@ -200,77 +200,80 @@ function DetailsPopup({
                 </Tooltip>
               </div>
               
-              <div className="relative flex items-center bg-gray-50 p-4 rounded-lg">
+              <div className="relative flex items-center bg-gray-50 p-2 sm:p-4 rounded-lg">
+                <button
+                  onClick={() => slideLeft("slider-1", 150)}
+                  className="absolute left-1 sm:left-2 p-1.5 sm:p-2 rounded-full bg-white shadow-md text-gray-600 hover:text-gray-800 hover:bg-gray-50 transition-all z-10"
+                >
+                  <ChevronLeft size={18} />
+                </button>
+                
                 <div
-                  id="slider-3"
-                  className="h-36 pt-1 overflow-x-scroll whitespace-nowrap scroll-smooth scrollbar-hide w-full"
+                  id="slider-1"
+                  className="flex gap-3 sm:gap-6 overflow-x-auto hide-scrollbar scroll-smooth px-8 sm:px-10 py-2 min-h-[140px] sm:min-h-[160px] items-center"
                 >
                   {interviewers.map((item) => (
                     <div
-                      className="inline-block cursor-pointer ml-1 mr-5 rounded-xl shrink-0 overflow-hidden relative"
-                      key={item.id.toString()}
+                      key={item.id}
+                      className="flex-shrink-0 cursor-pointer group w-[100px] sm:w-[120px]"
+                      onClick={() => {
+                        setSelectedInterviewer(item.id);
+                      }}
                     >
-                      <Tooltip>
-                        <TooltipTrigger asChild>
+                      <div className="relative">
+                        <div
+                          className={`w-[100px] h-[100px] sm:w-[120px] sm:h-[120px] rounded-xl overflow-hidden transition-all duration-200 ${
+                            selectedInterviewer === item.id
+                              ? "ring-4 ring-indigo-600 ring-offset-2 sm:ring-offset-4 scale-105 bg-white"
+                              : "ring-2 ring-gray-200 hover:ring-indigo-200 hover:scale-105"
+                          }`}
+                        >
+                          <Image
+                            src={item.image}
+                            alt={`${item.name} avatar`}
+                            width={120}
+                            height={120}
+                            className="w-full h-full object-cover"
+                          />
+                        </div>
+                        {selectedInterviewer === item.id && (
+                          <div className="absolute -top-1.5 -right-1.5 sm:-top-2 sm:-right-2 bg-indigo-600 text-white p-1 sm:p-1.5 rounded-full shadow-lg">
+                            <svg width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg">
+                              <path d="M10 3L4.5 8.5L2 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                            </svg>
+                          </div>
+                        )}
+                      </div>
+                      <div className="mt-2 text-center">
+                        <p className={`text-xs sm:text-sm font-medium truncate w-full ${
+                          selectedInterviewer === item.id ? "text-indigo-600" : "text-gray-700"
+                        }`}>
+                          {item.name}
+                        </p>
+                        <div className="flex items-center justify-center gap-1">
+                          <p className="text-[10px] sm:text-xs text-gray-500">HR</p>
                           <button
-                            className="absolute right-0 top-0 p-1 bg-white rounded-full shadow-md"
                             onClick={(e) => {
                               e.stopPropagation();
                               setInterviewerDetails(item);
                               setOpenInterviewerDetails(true);
                             }}
+                            className="p-1 text-gray-400 hover:text-indigo-600 transition-colors"
                           >
-                            <Info size={16} className="text-indigo-600" />
+                            <Info size={10} className="sm:w-3 sm:h-3" />
                           </button>
-                        </TooltipTrigger>
-                        <TooltipContent>
-                          <p className="text-xs">View interviewer details</p>
-                        </TooltipContent>
-                      </Tooltip>
-                      
-                      <div
-                        className={`w-[100px] h-[100px] overflow-hidden rounded-full transition-all ${
-                          selectedInterviewer === item.id
-                            ? "border-4 border-indigo-600 scale-105"
-                            : "border-2 border-gray-200 opacity-80 hover:opacity-100"
-                        }`}
-                        onClick={() => setSelectedInterviewer(item.id)}
-                      >
-                        <Image
-                          src={item.image}
-                          alt={`${item.name}`}
-                          width={100}
-                          height={100}
-                          className="w-full h-full object-cover"
-                        />
+                        </div>
                       </div>
-                      <p className="mt-2 text-sm font-medium text-center truncate w-24 mx-auto">
-                        {item.name}
-                      </p>
                     </div>
                   ))}
                 </div>
-                
-                {interviewers.length > 4 && (
-                  <div className="flex flex-col justify-center items-center gap-4 ml-3">
-                    <Button 
-                      variant="outline"
-                      size="icon"
-                      className="rounded-full w-8 h-8 p-0 bg-white shadow-md"
-                      onClick={() => slideLeft("slider-3", 115)}
-                    >
-                      <ChevronLeft size={18} />
-                    </Button>
-                    <Button 
-                      variant="outline"
-                      size="icon"
-                      className="rounded-full w-8 h-8 p-0 bg-white shadow-md"
-                      onClick={() => slideRight("slider-3", 115)}
-                    >
-                      <ChevronRight size={18} />
-                    </Button>
-                  </div>
-                )}
+
+                <button
+                  onClick={() => slideRight("slider-1", 150)}
+                  className="absolute right-1 sm:right-2 p-1.5 sm:p-2 rounded-full bg-white shadow-md text-gray-600 hover:text-gray-800 hover:bg-gray-50 transition-all z-10"
+                >
+                  <ChevronRight size={18} />
+                </button>
               </div>
             </div>
 
@@ -283,7 +286,7 @@ function DetailsPopup({
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <Button variant="ghost" className="p-0 h-auto ml-2">
-                      <HelpCircle size={16} className="text-gray-400" />
+                      <HelpCircle size={14} className="text-gray-400" />
                     </Button>
                   </TooltipTrigger>
                   <TooltipContent>
@@ -294,7 +297,7 @@ function DetailsPopup({
               <Textarea
                 id="objective"
                 value={objective}
-                className="h-24 resize-none border-gray-300 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition-all"
+                className="h-20 sm:h-24 resize-none border-gray-300 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition-all text-sm sm:text-base"
                 placeholder="e.g. Assess candidates based on their technical skills, problem-solving abilities, and experience with React."
                 onChange={(e: ChangeEvent<HTMLTextAreaElement>) => setObjective(e.target.value)}
                 onBlur={(e: ChangeEvent<HTMLTextAreaElement>) => setObjective(e.target.value.trim())}
@@ -302,7 +305,7 @@ function DetailsPopup({
             </div>
 
             {/* Document Upload Section */}
-            <div className="space-y-2 bg-gray-50 p-4 rounded-lg">
+            <div className="space-y-2 bg-gray-50 p-3 sm:p-4 rounded-lg">
               <div className="flex items-center">
                 <Label className="text-sm font-medium">
                   Supporting Documents
@@ -310,7 +313,7 @@ function DetailsPopup({
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <Button variant="ghost" className="p-0 h-auto ml-2">
-                      <HelpCircle size={16} className="text-gray-400" />
+                      <HelpCircle size={14} className="text-gray-400" />
                     </Button>
                   </TooltipTrigger>
                   <TooltipContent>
@@ -330,7 +333,7 @@ function DetailsPopup({
             </div>
 
             {/* Interview Settings Section */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 bg-gray-50 p-4 rounded-lg">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 bg-gray-50 p-3 sm:p-4 rounded-lg">
               {/* Anonymous Responses */}
               <div className="space-y-2">
                 <div className="flex flex-col space-y-1">
@@ -342,7 +345,7 @@ function DetailsPopup({
                       <Tooltip>
                         <TooltipTrigger asChild>
                           <Button variant="ghost" className="p-0 h-auto ml-2">
-                            <HelpCircle size={16} className="text-gray-400" />
+                            <HelpCircle size={14} className="text-gray-400" />
                           </Button>
                         </TooltipTrigger>
                         <TooltipContent>
@@ -357,7 +360,7 @@ function DetailsPopup({
                       onCheckedChange={(checked) => setIsAnonymous(checked)}
                     />
                   </div>
-                  <p className="text-xs text-gray-500 italic">
+                  <p className="text-[10px] sm:text-xs text-gray-500 italic">
                     If disabled, interviewee&apos;s email and name will be collected
                   </p>
                 </div>
@@ -372,7 +375,7 @@ function DetailsPopup({
                   <Tooltip>
                     <TooltipTrigger asChild>
                       <Button variant="ghost" className="p-0 h-auto ml-2">
-                        <HelpCircle size={16} className="text-gray-400" />
+                        <HelpCircle size={14} className="text-gray-400" />
                       </Button>
                     </TooltipTrigger>
                     <TooltipContent>
@@ -385,7 +388,7 @@ function DetailsPopup({
                   type="number"
                   min="1"
                   max="5"
-                  className="w-full border-gray-300 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition-all"
+                  className="w-full border-gray-300 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition-all text-sm sm:text-base"
                   value={numQuestions}
                   onChange={(e: ChangeEvent<HTMLInputElement>) => {
                     let value = e.target.value;
@@ -411,7 +414,7 @@ function DetailsPopup({
                   <Tooltip>
                     <TooltipTrigger asChild>
                       <Button variant="ghost" className="p-0 h-auto ml-2">
-                        <HelpCircle size={16} className="text-gray-400" />
+                        <HelpCircle size={14} className="text-gray-400" />
                       </Button>
                     </TooltipTrigger>
                     <TooltipContent>
@@ -420,13 +423,13 @@ function DetailsPopup({
                   </Tooltip>
                 </div>
                 <div className="relative">
-                  <Clock className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-500" />
+                  <Clock className="absolute left-3 top-1/2 transform -translate-y-1/2 h-3.5 w-3.5 text-gray-500" />
                   <Input
                     id="duration"
                     type="number"
                     min="1"
                     max="10"
-                    className="pl-10 w-full border-gray-300 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition-all"
+                    className="pl-10 w-full border-gray-300 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition-all text-sm sm:text-base"
                     value={duration}
                     onChange={(e: ChangeEvent<HTMLInputElement>) => {
                       let value = e.target.value;
@@ -446,14 +449,14 @@ function DetailsPopup({
             </div>
 
             {/* Action Buttons */}
-            <div className="flex flex-col sm:flex-row justify-center gap-4 mt-8 mb-4">
+            <div className="flex flex-col sm:flex-row justify-center gap-3 sm:gap-4 mt-6 sm:mt-8 mb-2 sm:mb-4">
               <Button
                 disabled={!isFormValid || isClicked}
                 className={`${
                   isFormValid && !isClicked
                     ? "bg-indigo-600 hover:bg-indigo-700"
                     : "bg-gray-300"
-                } text-white py-2 px-6 rounded-lg transition-all shadow-md flex-1 max-w-xs`}
+                } text-white py-2 px-4 sm:px-6 rounded-lg transition-all shadow-md flex-1 max-w-none sm:max-w-xs text-sm sm:text-base`}
                 onClick={() => {
                   setIsClicked(true);
                   onGenrateQuestions();
@@ -467,7 +470,7 @@ function DetailsPopup({
                   isFormValid && !isClicked
                     ? "bg-white text-indigo-600 border border-indigo-600 hover:bg-indigo-50"
                     : "bg-gray-100 text-gray-400 border border-gray-300"
-                } py-2 px-6 rounded-lg transition-all shadow-sm flex-1 max-w-xs`}
+                } py-2 px-4 sm:px-6 rounded-lg transition-all shadow-sm flex-1 max-w-none sm:max-w-xs text-sm sm:text-base`}
                 onClick={() => {
                   setIsClicked(true);
                   onManual();

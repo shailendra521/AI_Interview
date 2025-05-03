@@ -23,22 +23,19 @@ const InterviewerCard = ({ interviewer }: Props) => {
   );
 
   // Function to determine skill level based on average score
-  const getSkillLevel = (score: number): { label: string; color: string; icon: JSX.Element } => {
+  const getSkillLevel = (score: number): { color: string; icon: JSX.Element } => {
     if (score >= 8) {
       return { 
-        label: "Expert", 
         color: "bg-green-50 text-green-700 border-green-200",
         icon: <Award className="h-3 w-3" />
       };
     } else if (score >= 6) {
       return { 
-        label: "Advanced", 
         color: "bg-blue-50 text-blue-700 border-blue-200",
         icon: <Zap className="h-3 w-3" />
       };
     } else {
       return { 
-        label: "Standard", 
         color: "bg-amber-50 text-amber-700 border-amber-200",
         icon: <Star className="h-3 w-3" />
       };
@@ -87,9 +84,8 @@ const InterviewerCard = ({ interviewer }: Props) => {
 
             {/* Skill level badge */}
             <div className="absolute top-3 right-3">
-              <Badge variant="outline" className={cn("px-2 py-1 flex items-center gap-1", skillLevel.color)}>
+              <Badge variant="outline" className={cn("p-1 flex items-center", skillLevel.color)}>
                 {skillLevel.icon}
-                <span>{skillLevel.label}</span>
               </Badge>
             </div>
           </div>
