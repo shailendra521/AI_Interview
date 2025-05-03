@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { PlayCircleIcon, MessageSquareIcon, UsersIcon, BarChart2 } from "lucide-react";
+import { PlayCircleIcon, MessageSquareIcon, UsersIcon, BarChart2, Sparkles } from "lucide-react";
 import { usePathname, useRouter } from "next/navigation";
 
 function SideMenu() {
@@ -36,31 +36,42 @@ function SideMenu() {
   ];
 
   return (
-    <div className="z-[10] bg-white border-r border-slate-200 p-4 w-[220px] fixed top-16 left-0 h-[calc(100vh-4rem)] shadow-sm">
-      <div className="flex flex-col gap-2 mt-2">
-        <h3 className="text-xs uppercase text-slate-500 font-semibold ml-3 mb-1">Main</h3>
-        {menuItems.map((item, index) => (
-          <div
-            key={index}
-            className={`flex items-center p-3 rounded-lg cursor-pointer transition-all duration-200 ${
-              item.active
-                ? "bg-primary text-white shadow-md"
-                : "hover:bg-slate-100 text-slate-700"
-            } slide-in-from-left`}
-            style={{ animationDelay: `${index * 50}ms` }}
-            onClick={() => router.push(item.route)}
-          >
-            <div className={`${item.active ? "text-white" : "text-primary"} mr-2.5`}>
-              {item.icon}
+    <div className="fixed inset-y-0 left-0 w-64 bg-black/80 backdrop-blur-md border-r border-[#02563D]/30">
+      <div className="flex flex-col h-full py-8 gap-8">
+        <div className="px-6 space-y-2">
+          {menuItems.map((item) => (
+            <button
+              key={item.route}
+              onClick={() => router.push(item.route)}
+              className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-lg transition-all duration-300
+                ${item.active 
+                  ? "bg-gradient-to-r from-[#02563D]/30 to-emerald-900/20 text-white shadow-lg shadow-[#02563D]/20" 
+                  : "text-neutral-400 hover:text-neutral-200 hover:bg-[#02563D]/10"}`}
+            >
+              <span className={`${item.active ? "text-emerald-400" : "text-neutral-400"}`}>
+                {item.icon}
+              </span>
+              <span className="font-medium">{item.label}</span>
+              {item.active && (
+                <div className="absolute right-2 opacity-50">
+                  <Sparkles className="w-4 h-4 text-emerald-400" />
+                </div>
+              )}
+            </button>
+          ))}
+        </div>
+
+        {/* Pro Tip Card */}
+        <div className="px-6">
+          <div className="relative p-4 rounded-xl bg-gradient-to-br from-[#02563D]/20 via-black to-emerald-900/10 border border-[#02563D]/30">
+            <div className="absolute top-2 right-2">
+              <Sparkles className="w-4 h-4 text-emerald-400/40" />
             </div>
-            <p className="font-medium">{item.label}</p>
+            <h4 className="text-sm font-semibold text-white mb-2">Pro Tip</h4>
+            <p className="text-xs text-neutral-400 leading-relaxed">
+              Customize your interview experience by adding unique questions and adjusting the difficulty level.
+            </p>
           </div>
-        ))}
-      </div>
-      <div className="absolute bottom-6 left-4 right-4">
-        <div className="bg-blue-50 p-4 rounded-lg border border-blue-100">
-          <h4 className="text-sm font-semibold text-blue-800 mb-1">Pro Tip</h4>
-          <p className="text-xs text-blue-700">Create custom interview templates to streamline your hiring process.</p>
         </div>
       </div>
     </div>

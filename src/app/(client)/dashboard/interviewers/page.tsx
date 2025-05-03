@@ -60,14 +60,14 @@ function Interviewers() {
     return (
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
         {[...Array(8)].map((_, index) => (
-          <Card key={index} className="overflow-hidden">
+          <Card key={index} className="overflow-hidden bg-zinc-900 border-zinc-800">
             <div className="h-48 w-full">
-              <Skeleton className="h-full w-full rounded-none" />
+              <Skeleton className="h-full w-full rounded-none bg-zinc-800" />
             </div>
             <CardContent className="p-5 flex flex-col items-center space-y-3">
-              <Skeleton className="h-6 w-3/4" />
-              <Skeleton className="h-4 w-1/2" />
-              <Skeleton className="h-4 w-2/3" />
+              <Skeleton className="h-6 w-3/4 bg-zinc-800" />
+              <Skeleton className="h-4 w-1/2 bg-zinc-800" />
+              <Skeleton className="h-4 w-2/3 bg-zinc-800" />
             </CardContent>
           </Card>
         ))}
@@ -82,14 +82,14 @@ function Interviewers() {
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
       >
-        <Card className="w-full p-10 text-center border-dashed border-2 bg-slate-50">
+        <Card className="w-full p-10 text-center border-dashed border-2 border-zinc-800 bg-gradient-to-b from-zinc-900 to-zinc-800">
           <div className="flex flex-col items-center justify-center space-y-6">
-            <div className="bg-primary/10 p-4 rounded-full">
-              <Users className="h-10 w-10 text-primary" />
+            <div className="bg-purple-900/20 p-4 rounded-full">
+              <Users className="h-10 w-10 text-purple-400" />
             </div>
             <div className="space-y-2">
-              <h3 className="text-2xl font-medium">No interviewers yet</h3>
-              <p className="text-muted-foreground max-w-md mx-auto">
+              <h3 className="text-2xl font-medium text-zinc-100">No interviewers yet</h3>
+              <p className="text-zinc-400 max-w-md mx-auto">
                 Create your first interviewer to get started with conducting interviews. 
                 Interviewers can be customized to match your specific hiring needs.
               </p>
@@ -111,12 +111,16 @@ function Interviewers() {
         transition={{ duration: 0.3 }}
         className="text-center py-16"
       >
-        <Search className="mx-auto h-12 w-12 text-muted-foreground/50 mb-4" />
-        <h3 className="text-xl font-medium mb-2">No interviewers found</h3>
-        <p className="text-muted-foreground mb-6">
+        <Search className="mx-auto h-12 w-12 text-zinc-600 mb-4" />
+        <h3 className="text-xl font-medium mb-2 text-zinc-100">No interviewers found</h3>
+        <p className="text-zinc-400 mb-6">
           No interviewers match your search criteria
         </p>
-        <Button onClick={() => setSearchQuery("")} variant="outline">
+        <Button 
+          onClick={() => setSearchQuery("")} 
+          variant="outline"
+          className="border-zinc-700 text-zinc-300 hover:bg-zinc-800 hover:text-zinc-100"
+        >
           Clear Search
         </Button>
       </motion.div>
@@ -126,8 +130,10 @@ function Interviewers() {
   const FilterBadge = ({ name, active }: { name: string; active: boolean }) => (
     <Badge
       className={cn(
-        "px-3 py-1 text-sm cursor-pointer transition-all hover:bg-primary/90",
-        active ? "bg-primary text-white" : "bg-secondary text-muted-foreground hover:text-white"
+        "px-3 py-1 text-sm cursor-pointer transition-all",
+        active 
+          ? "bg-purple-600 text-zinc-100" 
+          : "bg-zinc-800 text-zinc-400 hover:bg-purple-900/50 hover:text-purple-300"
       )}
       onClick={() => setActiveFilter(active ? null : name)}
     >
@@ -136,173 +142,158 @@ function Interviewers() {
   );
 
   return (
-    <main className="container py-8 space-y-8 max-w-6xl mx-auto">
-      {/* Header with animated badge */}
-      <div className="space-y-3">
-        <div className="flex items-center space-x-3">
-          <motion.div
-            initial={{ scale: 0.8, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            transition={{ type: "spring", stiffness: 300, damping: 20 }}
-            className="bg-primary/10 p-2 rounded-full"
-          >
-            <Users className="h-6 w-6 text-primary" />
-          </motion.div>
-          <div>
-            <div className="flex items-center gap-2">
-              <h2 className="text-2xl font-bold tracking-tight">Interviewers</h2>
-              <motion.div
-                initial={{ y: 20, opacity: 0 }}
-                animate={{ y: 0, opacity: 1 }}
-                transition={{ delay: 0.3, duration: 0.5 }}
-              >
-                <Badge variant="outline" className="bg-amber-50 text-amber-600 border-amber-200 flex items-center gap-1">
-                  <Award className="h-3 w-3" />
-                  <span>Elite</span>
-                </Badge>
-              </motion.div>
+    <main className="min-h-screen bg-gradient-to-b from-zinc-900 via-zinc-900 to-black">
+      <div className="container py-8 space-y-8 max-w-6xl mx-auto">
+        {/* Header with animated badge */}
+        <div className="space-y-3">
+          <div className="flex items-center space-x-3">
+            <motion.div
+              initial={{ scale: 0.8, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              transition={{ type: "spring", stiffness: 300, damping: 20 }}
+              className="bg-purple-900/20 p-2 rounded-full"
+            >
+              <Users className="h-6 w-6 text-purple-400" />
+            </motion.div>
+            <div>
+              <div className="flex items-center gap-2">
+                <h2 className="text-2xl font-bold tracking-tight text-zinc-100">Interviewers</h2>
+                <motion.div
+                  initial={{ y: 20, opacity: 0 }}
+                  animate={{ y: 0, opacity: 1 }}
+                  transition={{ delay: 0.3, duration: 0.5 }}
+                >
+                  <Badge variant="outline" className="bg-gradient-to-r from-amber-500/10 to-orange-500/10 text-amber-400 border-amber-500/20 flex items-center gap-1">
+                    <Award className="h-3 w-3" />
+                    <span>Elite</span>
+                  </Badge>
+                </motion.div>
+              </div>
+              <p className="text-sm text-zinc-400 mt-1">
+                Get to know them by clicking on their profile.
+              </p>
             </div>
-            <p className="text-sm text-muted-foreground mt-1">
-              Get to know them by clicking on their profile.
-            </p>
           </div>
+          
+          {/* Search and filter bar */}
+          {interviewers.length > 0 && (
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.3, delay: 0.1 }}
+              className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between py-2"
+            >
+              <div className="flex-1 w-full sm:max-w-md relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-zinc-400" />
+                <Input 
+                  placeholder="Search interviewers..." 
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="pl-10 bg-zinc-800/50 border-zinc-700 text-zinc-100 placeholder:text-zinc-500 focus:border-purple-500 focus:ring-purple-500/20"
+                />
+              </div>
+              <div className="flex items-center space-x-3 w-full sm:w-auto justify-between sm:justify-end">
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant={view === "grid" ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => setView("grid")}
+                    className={cn(
+                      "h-9 px-3",
+                      view === "grid" 
+                        ? "bg-purple-600 text-zinc-100 hover:bg-purple-700" 
+                        : "border-zinc-700 text-zinc-300 hover:bg-zinc-800 hover:text-zinc-100"
+                    )}
+                  >
+                    Grid
+                  </Button>
+                  <Button
+                    variant={view === "carousel" ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => setView("carousel")}
+                    className={cn(
+                      "h-9 px-3",
+                      view === "carousel" 
+                        ? "bg-purple-600 text-zinc-100 hover:bg-purple-700" 
+                        : "border-zinc-700 text-zinc-300 hover:bg-zinc-800 hover:text-zinc-100"
+                    )}
+                  >
+                    Carousel
+                  </Button>
+                </div>
+                <CreateInterviewerButton />
+              </div>
+            </motion.div>
+          )}
         </div>
-        
-        {/* Search and filter bar */}
-        {interviewers.length > 0 && (
+
+        {/* Filtering and sorting options */}
+        {interviewers.length > 0 && !interviewersLoading && (
           <motion.div
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.3, delay: 0.1 }}
-            className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between py-2"
+            transition={{ duration: 0.3, delay: 0.2 }}
+            className="flex flex-wrap gap-3 items-center"
           >
-            <div className="flex-1 w-full sm:max-w-md relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input 
-                placeholder="Search interviewers..." 
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-10"
-              />
-            </div>
-            <div className="flex items-center space-x-3 w-full sm:w-auto justify-between sm:justify-end">
-              <div className="flex items-center gap-2">
-                <Button
-                  variant={view === "grid" ? "default" : "outline"}
-                  size="sm"
-                  onClick={() => setView("grid")}
-                  className="h-9 px-3"
-                >
-                  Grid
-                </Button>
-                <Button
-                  variant={view === "carousel" ? "default" : "outline"}
-                  size="sm"
-                  onClick={() => setView("carousel")}
-                  className="h-9 px-3"
-                >
-                  Carousel
-                </Button>
-              </div>
-              <CreateInterviewerButton />
+            <span className="text-sm font-medium text-muted-foreground mr-1">Sort by:</span>
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              className={cn("h-8", sortBy === "newest" && "bg-secondary")}
+              onClick={() => setSortBy("newest")}
+            >
+              Newest
+            </Button>
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              className={cn("h-8", sortBy === "name" && "bg-secondary")}
+              onClick={() => setSortBy("name")}
+            >
+              Name
+            </Button>
+            <div className="ml-auto flex flex-wrap gap-2">
+              <FilterBadge name="Technical" active={activeFilter === "Technical"} />
+              <FilterBadge name="Behavioral" active={activeFilter === "Behavioral"} />
+              <FilterBadge name="Leadership" active={activeFilter === "Leadership"} />
             </div>
           </motion.div>
         )}
-      </div>
 
-      {/* Filtering and sorting options */}
-      {interviewers.length > 0 && !interviewersLoading && (
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.3, delay: 0.2 }}
-          className="flex flex-wrap gap-3 items-center"
-        >
-          <span className="text-sm font-medium text-muted-foreground mr-1">Sort by:</span>
-          <Button 
-            variant="ghost" 
-            size="sm" 
-            className={cn("h-8", sortBy === "newest" && "bg-secondary")}
-            onClick={() => setSortBy("newest")}
-          >
-            Newest
-          </Button>
-          <Button 
-            variant="ghost" 
-            size="sm" 
-            className={cn("h-8", sortBy === "name" && "bg-secondary")}
-            onClick={() => setSortBy("name")}
-          >
-            Name
-          </Button>
-          <div className="ml-auto flex flex-wrap gap-2">
-            <FilterBadge name="Technical" active={activeFilter === "Technical"} />
-            <FilterBadge name="Behavioral" active={activeFilter === "Behavioral"} />
-            <FilterBadge name="Leadership" active={activeFilter === "Leadership"} />
-          </div>
-        </motion.div>
-      )}
-
-      {/* Main content */}
-      {interviewersLoading ? (
-        <InterviewersLoader />
-      ) : interviewers.length === 0 ? (
-        <EmptyState />
-      ) : filteredInterviewers.length === 0 ? (
-        <SearchNotFound />
-      ) : view === "carousel" ? (
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 0.5 }}
-        >
-          <Carousel 
-            opts={{ align: "start" }}
-            className="w-full"
-          >
-            <CarouselContent className="-ml-4">
-              {filteredInterviewers.map((interviewer, index) => (
-                <CarouselItem 
-                  key={String(interviewer.id)} 
-                  className="pl-4 md:basis-1/3 lg:basis-1/4"
-                >
-                  <motion.div
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.3, delay: index * 0.05 }}
-                  >
-                    <InterviewerCard interviewer={interviewer} />
-                  </motion.div>
-                </CarouselItem>
-              ))}
-            </CarouselContent>
-            <div className="hidden sm:block">
-              <CarouselPrevious className="left-0" />
-              <CarouselNext className="right-0" />
-            </div>
-          </Carousel>
-        </motion.div>
-      ) : (
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 0.5 }}
-          className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6"
-        >
-          {filteredInterviewers.map((interviewer, index) => (
+        {/* Content */}
+        <div className="space-y-6">
+          {interviewersLoading ? (
+            <InterviewersLoader />
+          ) : interviewers.length === 0 ? (
+            <EmptyState />
+          ) : filteredInterviewers.length === 0 ? (
+            <SearchNotFound />
+          ) : view === "grid" ? (
             <motion.div
-              key={String(interviewer.id)}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.3, delay: index * 0.05 }}
-              whileHover={{ y: -5 }}
-              className="h-full"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.3 }}
+              className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6"
             >
-              <InterviewerCard interviewer={interviewer} />
+              {filteredInterviewers.map((interviewer) => (
+                <InterviewerCard key={interviewer.id} interviewer={interviewer} />
+              ))}
             </motion.div>
-          ))}
-        </motion.div>
-      )}
+          ) : (
+            <Carousel className="w-full">
+              <CarouselContent>
+                {filteredInterviewers.map((interviewer) => (
+                  <CarouselItem key={interviewer.id} className="sm:basis-1/2 md:basis-1/3 lg:basis-1/4">
+                    <InterviewerCard interviewer={interviewer} />
+                  </CarouselItem>
+                ))}
+              </CarouselContent>
+              <CarouselPrevious className="bg-zinc-800 border-zinc-700 text-zinc-300 hover:bg-purple-900/50 hover:text-purple-300" />
+              <CarouselNext className="bg-zinc-800 border-zinc-700 text-zinc-300 hover:bg-purple-900/50 hover:text-purple-300" />
+            </Carousel>
+          )}
+        </div>
+      </div>
     </main>
   );
 }

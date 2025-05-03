@@ -42,7 +42,7 @@ export default function Modal({
       onClick={closeOnOutsideClick ? onClose : () => {}}
     >
       <div
-        className="bg-white rounded-xl shadow-lg max-w-4xl w-full mx-auto max-h-[90vh] overflow-y-auto transition-all scale-100 opacity-100"
+        // className="bg-white rounded-xl shadow-lg max-w-4xl w-full mx-auto max-h-[90vh] overflow-y-auto transition-all scale-100 opacity-100"
         style={{
           transform: "translateY(0)",
           position: "relative"

@@ -77,7 +77,7 @@ const getResponseCountByOrganizationId = async (
   try {
     const { count, error } = await supabase
       .from("interview")
-      .select("response(id)", { count: "exact", head: true }) // join + count
+      .select("response(id)", { count: "exact", head: true })
       .eq("organization_id", organizationId);
 
     return count ?? 0;

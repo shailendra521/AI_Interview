@@ -15,11 +15,13 @@ import { ChevronRight, Gem, Plus, BarChart3, LayoutGrid, List, Users } from "luc
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 function Interviews() {
   const { interviews, interviewsLoading } = useInterviews();
   const { organization } = useOrganization();
   const [loading, setLoading] = useState<boolean>(false);
+  const [statsLoading, setStatsLoading] = useState<boolean>(false);
   const [currentPlan, setCurrentPlan] = useState<string>("");
   const [allowedResponsesCount, setAllowedResponsesCount] = useState<number>(10);
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
@@ -32,7 +34,17 @@ function Interviews() {
     return (
       <div className="flex flex-row flex-wrap gap-4">
         {[1, 2, 3].map((index) => (
-          <div key={index} className="w-64 h-64 rounded-xl bg-slate-100 animate-pulse shadow-sm" />
+          <Card key={index} className="glass animate-pulse h-64 w-64 rounded-xl shrink-0">
+            <CardContent className="p-6">
+              <div className="h-4 w-3/4 bg-neutral-800 rounded mb-4"></div>
+              <div className="h-4 w-1/2 bg-neutral-800 rounded mb-8"></div>
+              <div className="space-y-3">
+                <div className="h-3 w-full bg-neutral-800 rounded"></div>
+                <div className="h-3 w-5/6 bg-neutral-800 rounded"></div>
+                <div className="h-3 w-4/6 bg-neutral-800 rounded"></div>
+              </div>
+            </CardContent>
+          </Card>
         ))}
       </div>
     );
@@ -136,221 +148,223 @@ function Interviews() {
   // Calculate response statistics
   useEffect(() => {
     const fetchTotalResponses = async () => {
-      let total = 0;
+      if (!organization?.id || filteredInterviews.length === 0) return;
       
-      for (const interview of filteredInterviews) {
-        try {
-          const responses = await ResponseService.getAllResponses(interview.id.toString());
-          total += responses.length;
-        } catch (error) {
-          console.error("Error fetching responses for interview:", error);
-        }
+      setStatsLoading(true);
+      try {
+        const total = await ResponseService.getResponseCountByOrganizationId(organization.id);
+        setTotalResponses(total);
+      } catch (error) {
+        console.error("Error fetching total responses:", error);
+        setTotalResponses(0);
       }
-      
-      setTotalResponses(total);
+      setStatsLoading(false);
     };
     
     fetchTotalResponses();
-  }, [filteredInterviews]);
+  }, [organization?.id, filteredInterviews]);
 
   return (
-    <>
-      <div className="flex justify-between items-center mb-6">
-        <div>
-          <h1 className="text-2xl font-bold text-slate-800">My Interviews</h1>
-          <p className="text-slate-500 mt-1">Create and manage your interview experiences</p>
-        </div>
-        <div className="flex items-center gap-3">
-          <Card className="px-4 py-3 flex items-center gap-2 border-slate-200 shadow-sm">
-            <BarChart3 className="text-primary w-5 h-5" />
-            <div>
-              <p className="text-sm font-medium text-slate-600">Total Interviews</p>
-              <p className="text-xl font-bold text-slate-800">{filteredInterviews.length}</p>
-            </div>
-          </Card>
-          
-          <Card className="px-4 py-3 flex items-center gap-2 border-slate-200 shadow-sm">
-            <Users className="text-indigo-500 w-5 h-5" />
-            <div>
-              <p className="text-sm font-medium text-slate-600">Responses</p>
-              <p className="text-xl font-bold text-slate-800">{totalResponses}</p>
-            </div>
-          </Card>
-        </div>
-      </div>
+    <div className="min-h-screen bg-black animated-gradient">
+      <div className="max-w-[1400px] mx-auto p-6 space-y-6">
+        <div className="flex justify-between items-center">
+          <div>
 
-      <div className="bg-white rounded-xl p-6 border border-slate-200 shadow-sm mb-8">
-        <div className="flex justify-between items-center mb-4">
-          <h2 className="text-lg font-semibold text-slate-800">Interview Gallery</h2>
-          <div className="flex items-center gap-4">
-            {uniqueInterviewers.length > 0 && (
-              <div className="flex items-center gap-2 mr-4">
-                <span className="text-sm text-slate-500">Filter:</span>
-                <div className="flex -space-x-2">
-                  {uniqueInterviewers.map((interviewer, index) => (
-                    <button 
-                      key={interviewer.id}
-                      onClick={() => setActiveFilter(activeFilter === interviewer.id.toString() ? null : interviewer.id.toString())}
-                      className={`relative rounded-full w-8 h-8 border-2 transition-all duration-200 ${
-                        activeFilter === interviewer.id.toString() 
-                          ? 'border-primary scale-110 z-10' 
-                          : 'border-white hover:scale-105 hover:z-10'
-                      }`}
-                      title={interviewer.name}
-                    >
-                      <Image 
-                        src={interviewer.image || "/default-avatar.png"} 
-                        alt={interviewer.name}
-                        width={32}
-                        height={32}
-                        className="rounded-full object-cover"
-                      />
-                    </button>
-                  ))}
-                  {activeFilter && (
-                    <button 
-                      onClick={() => setActiveFilter(null)}
-                      className="ml-2 text-xs text-slate-500 hover:text-slate-700"
-                    >
-                      Clear
-                    </button>
-                  )}
-                </div>
-              </div>
-            )}
-            
-            <Tabs defaultValue="grid" className="h-9" onValueChange={(value) => setViewMode(value as "grid" | "list")}>
-              <TabsList className="grid grid-cols-2 h-8 w-20">
-                <TabsTrigger value="grid" className="p-0">
-                  <LayoutGrid className="h-4 w-4" />
-                </TabsTrigger>
-                <TabsTrigger value="list" className="p-0">
-                  <List className="h-4 w-4" />
-                </TabsTrigger>
-              </TabsList>
-            </Tabs>
-            
-            <button className="text-primary text-sm font-medium flex items-center hover:text-primary/80 transition-colors">
-              View All <ChevronRight className="w-4 h-4 ml-1" />
-            </button>
           </div>
         </div>
-        
-        <div className={`relative ${viewMode === "grid" ? "flex flex-wrap gap-4" : "space-y-3"}`}>
-          {currentPlan == "free_trial_over" ? (
-            <Card className="flex bg-gradient-to-br from-slate-50 to-slate-100 items-center border-dashed border-slate-300 border hover:shadow-md transition-all duration-300 ease-in-out h-64 w-64 rounded-xl shrink-0 overflow-hidden hover-lift">
-              <CardContent className="flex items-center flex-col mx-auto p-6">
-                <div className="flex flex-col justify-center items-center w-full mb-4">
-                  <Plus size={64} strokeWidth={1} className="text-slate-400" />
-                </div>
-                <CardTitle className="text-center text-slate-700 mb-2">Upgrade Required</CardTitle>
-                <p className="text-sm text-center text-slate-500">You cannot create more interviews unless you upgrade</p>
-              </CardContent>
+
+        <div className="flex justify-between items-center">
+          <div>
+            <h1 className="text-3xl font-bold gradient-text">My Interviews</h1>
+            <p className="text-neutral-400 mt-1">Create and manage your interview experiences</p>
+          </div>
+          <div className="flex items-center gap-4">
+            <Card className="glass glass-hover p-4 flex items-start gap-3 min-w-[200px]">
+              <div className="p-2 rounded-lg bg-[#02563D]/10">
+                <BarChart3 className="w-5 h-5 text-[#02563D]" />
+              </div>
+              <div className="flex flex-col">
+                <p className="text-sm font-medium text-gray-500">Total Interviews</p>
+                <p className="text-2xl font-bold text-[#02563D]">
+                  {statsLoading ? (
+                    <span className="inline-block w-8 h-6 bg-neutral-800 animate-pulse rounded"></span>
+                  ) : (
+                    filteredInterviews.length
+                  )}
+                </p>
+              </div>
             </Card>
-          ) : (
-            <CreateInterviewCard />
-          )}
+            
+            <Card className="glass glass-hover p-4 flex items-start gap-3 min-w-[200px]">
+              <div className="p-2 rounded-lg bg-[#02563D]/10">
+                <Users className="w-5 h-5 text-[#02563D]" />
+              </div>
+              <div className="flex flex-col">
+                <p className="text-sm font-medium text-gray-500">Responses</p>
+                <p className="text-2xl font-bold text-[#02563D]">
+                  {statsLoading ? (
+                    <span className="inline-block w-8 h-6 bg-neutral-800 animate-pulse rounded"></span>
+                  ) : (
+                    totalResponses
+                  )}
+                </p>
+              </div>
+            </Card>
+          </div>
+        </div>
+
+        <div className="glass rounded-xl p-8">
+          <div className="flex justify-between items-center mb-6">
+            <h2 className="text-xl font-semibold text-white">Interview Gallery</h2>
+            <div className="flex items-center gap-4">
+              {uniqueInterviewers.length > 0 && (
+                <Select value={activeFilter || 'all'} onValueChange={(value) => setActiveFilter(value === 'all' ? null : value)}>
+                  <SelectTrigger className="w-[200px] bg-black/40 border-neutral-800 text-neutral-300 hover:bg-black/60 transition-colors">
+                    <SelectValue placeholder="Filter by interviewer" />
+                  </SelectTrigger>
+                  <SelectContent className="glass border-neutral-800">
+                    <SelectItem value="all" className="text-neutral-300 hover:text-white hover:bg-[#02563D]/20">
+                      All Interviewers
+                    </SelectItem>
+                    {uniqueInterviewers.map((interviewer) => (
+                      <SelectItem
+                        key={interviewer.id}
+                        value={interviewer.id.toString()}
+                        className="text-neutral-300 hover:text-white hover:bg-[#02563D]/20"
+                      >
+                        {interviewer.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
+              
+              <Tabs defaultValue="grid" className="h-9" onValueChange={(value) => setViewMode(value as "grid" | "list")}>
+                <TabsList className="grid grid-cols-2 h-8 w-20 bg-black/40 border border-neutral-800">
+                  <TabsTrigger value="grid" className="p-0 data-[state=active]:bg-[#02563D] data-[state=active]:text-white">
+                    <LayoutGrid className="h-4 w-4" />
+                  </TabsTrigger>
+                  <TabsTrigger value="list" className="p-0 data-[state=active]:bg-[#02563D] data-[state=active]:text-white">
+                    <List className="h-4 w-4" />
+                  </TabsTrigger>
+                </TabsList>
+              </Tabs>
+              
+              <button className="text-[#02563D] text-sm font-medium flex items-center hover:text-[#02563D]/80 transition-colors">
+                View All <ChevronRight className="w-4 h-4 ml-1" />
+              </button>
+            </div>
+          </div>
           
-          {interviewsLoading || loading ? (
-            <InterviewsLoader />
-          ) : (
-            <>
-              {filteredInterviews.map((item) => (
-                <div className={viewMode === "list" ? "w-full animate-fade-in" : "animate-fade-in"} key={item.id}>
-                  <InterviewCard
-                    id={item.id}
-                    interviewerId={item.interviewer_id}
-                    name={item.name}
-                    url={item.url ?? ""}
-                    readableSlug={item.readable_slug}
-                    interviewer={interviewers[item.interviewer_id.toString()]}
-                    viewMode={viewMode}
-                  />
-                </div>
-              ))}
-            </>
-          )}
+          <div className={`relative ${viewMode === "grid" ? "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6" : "space-y-4"}`}>
+            {currentPlan == "free_trial_over" ? (
+              <Card className="flex glass glass-hover items-center border-dashed border-neutral-700 hover:border-[#02563D]/50 transition-all duration-300 ease-in-out h-[280px] rounded-xl overflow-hidden hover-lift">
+                <CardContent className="flex items-center flex-col mx-auto p-6">
+                  <div className="flex flex-col justify-center items-center w-full mb-4">
+                    <div className="p-4 rounded-full bg-[#02563D]/10 mb-4">
+                      <Plus className="w-10 h-10 text-[#02563D]" strokeWidth={1.5} />
+                    </div>
+                  </div>
+                  <CardTitle className="text-center text-xl text-neutral-300 mb-3">Upgrade Required</CardTitle>
+                  <p className="text-sm text-center text-neutral-500">You cannot create more interviews unless you upgrade</p>
+                </CardContent>
+              </Card>
+            ) : (
+              <CreateInterviewCard />
+            )}
+            
+            {interviewsLoading ? (
+              <InterviewsLoader />
+            ) : (
+              <>
+                {filteredInterviews.map((item) => (
+                  <div className="animate-fade-in" key={item.id}>
+                    <InterviewCard
+                      id={item.id}
+                      interviewerId={item.interviewer_id}
+                      name={item.name}
+                      url={item.url ?? ""}
+                      readableSlug={item.readable_slug}
+                      interviewer={interviewers[item.interviewer_id.toString()]}
+                      viewMode={viewMode}
+                    />
+                  </div>
+                ))}
+              </>
+            )}
+          </div>
         </div>
       </div>
 
       {isModalOpen && (
-        <Modal open={isModalOpen} onClose={() => setIsModalOpen(false)}>
-          <div className="flex flex-col space-y-5">
-            <div className="flex justify-center">
-              <div className="bg-blue-50 p-3 rounded-full">
-                <Gem className="text-primary w-6 h-6" />
-              </div>
-            </div>
-            <h3 className="text-xl font-bold text-center text-slate-800">Upgrade to Pro</h3>
-            <p className="text-slate-600 text-center">
-              You've reached your limit for the free trial. Upgrade to pro to continue using all features.
-            </p>
-            
-            <div className="grid grid-cols-2 gap-4 mt-2">
-              <div className="flex justify-center items-center">
-                <Image
-                  src={"/premium-plan-icon.png"}
-                  alt="Premium Plan"
-                  width={200}
-                  height={200}
-                  className="object-contain"
-                />
-              </div>
-
-              <div className="grid grid-rows-2 gap-3">
-                <div className="p-4 border border-slate-200 rounded-lg bg-slate-50">
-                  <h4 className="text-lg font-medium text-slate-800 mb-2">Free Plan</h4>
-                  <ul className="space-y-1">
-                    <li className="flex items-center text-sm text-slate-600">
-                      <span className="w-1.5 h-1.5 bg-slate-400 rounded-full mr-2"></span>
-                      10 Responses
-                    </li>
-                    <li className="flex items-center text-sm text-slate-600">
-                      <span className="w-1.5 h-1.5 bg-slate-400 rounded-full mr-2"></span>
-                      Basic Support
-                    </li>
-                    <li className="flex items-center text-sm text-slate-600">
-                      <span className="w-1.5 h-1.5 bg-slate-400 rounded-full mr-2"></span>
-                      Limited Features
-                    </li>
-                  </ul>
-                </div>
-                
-                <div className="p-4 border border-primary/30 rounded-lg bg-blue-50">
-                  <h4 className="text-lg font-medium text-primary mb-2">Pro Plan</h4>
-                  <ul className="space-y-1">
-                    <li className="flex items-center text-sm text-slate-600">
-                      <span className="w-1.5 h-1.5 bg-primary rounded-full mr-2"></span>
-                      Flexible Pay-Per-Response
-                    </li>
-                    <li className="flex items-center text-sm text-slate-600">
-                      <span className="w-1.5 h-1.5 bg-primary rounded-full mr-2"></span>
-                      Priority Support
-                    </li>
-                    <li className="flex items-center text-sm text-slate-600">
-                      <span className="w-1.5 h-1.5 bg-primary rounded-full mr-2"></span>
-                      All Features
-                    </li>
-                  </ul>
-                </div>
-              </div>
+        <Modal
+          open={isModalOpen}
+          onClose={() => setIsModalOpen(false)}
+          className="glass"
+        >
+          <div className="mb-6">
+            <h3 className="text-2xl font-bold gradient-text mb-2">Upgrade Your Plan</h3>
+            <p className="text-neutral-400">Your free trial has ended. Upgrade to continue creating interviews.</p>
+          </div>
+          <div className="grid grid-rows-2 gap-4">
+            <div className="glass p-6 rounded-xl">
+              <h4 className="text-lg font-medium text-white mb-3">Free Plan</h4>
+              <ul className="space-y-2">
+                <li className="flex items-center text-sm text-neutral-400">
+                  <span className="w-1.5 h-1.5 bg-neutral-500 rounded-full mr-2"></span>
+                  10 Responses
+                </li>
+                <li className="flex items-center text-sm text-neutral-400">
+                  <span className="w-1.5 h-1.5 bg-neutral-500 rounded-full mr-2"></span>
+                  Basic Support
+                </li>
+                <li className="flex items-center text-sm text-neutral-400">
+                  <span className="w-1.5 h-1.5 bg-neutral-500 rounded-full mr-2"></span>
+                  Limited Features
+                </li>
+              </ul>
             </div>
             
-            <div className="text-center mt-2">
-              <p className="text-sm text-slate-600">
-                Contact <span className="font-semibold text-primary">info@hrone.cloud</span> to upgrade your plan.
-              </p>
-              <button 
-                onClick={() => setIsModalOpen(false)}
-                className="mt-4 w-full bg-primary text-white py-2.5 px-4 rounded-lg font-medium hover:bg-primary/90 transition-colors"
-              >
-                Got it
-              </button>
+            <div className="glass p-6 rounded-xl border border-[#02563D]/20 bg-[#02563D]/5">
+              <h4 className="text-lg font-medium gradient-text mb-3">Pro Plan</h4>
+              <ul className="space-y-2">
+                <li className="flex items-center text-sm text-neutral-300">
+                  <span className="w-1.5 h-1.5 bg-[#02563D] rounded-full mr-2"></span>
+                  Unlimited Responses
+                </li>
+                <li className="flex items-center text-sm text-neutral-300">
+                  <span className="w-1.5 h-1.5 bg-[#02563D] rounded-full mr-2"></span>
+                  Priority Support
+                </li>
+                <li className="flex items-center text-sm text-neutral-300">
+                  <span className="w-1.5 h-1.5 bg-[#02563D] rounded-full mr-2"></span>
+                  Advanced Features
+                </li>
+              </ul>
             </div>
+          </div>
+          
+          <div className="mt-6 flex justify-end gap-3">
+            <Button
+              variant="outline"
+              onClick={() => setIsModalOpen(false)}
+              className="btn-outline"
+            >
+              Maybe Later
+            </Button>
+            <Button
+              onClick={() => {
+                // Handle upgrade action
+                setIsModalOpen(false);
+              }}
+              className="btn-primary"
+            >
+              Upgrade Now
+            </Button>
           </div>
         </Modal>
       )}
-    </>
+    </div>
   );
 }
 
