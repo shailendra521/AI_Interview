@@ -36,3 +36,18 @@ yarn-error.log*
 next-env.d.ts
 
 .idea/
+
+# YOLO models
+*.pt
+*.onnx
+*.weights
+*.bin
+*.cfg
+/yolo_models/
+/models/yolo/
+/weights/
+
+# Temporary YOLO detection files
+/runs/
+/detect/
+/inference/

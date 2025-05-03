@@ -576,7 +576,7 @@ function Call({ interview }: InterviewProps) {
                 </div>
                 <div className="flex items-center text-sm font-normal text-gray-600">
                   <AlarmClockIcon className="w-4 h-4 mr-1" />
-                  Expected duration: <span className="font-semibold ml-1">{interviewTimeDuration} mins</span> or less
+                  Expected duration: <span className="font-semibold ml-1">{interviewTimeDuration} mins</span> <span className="ml-1">or less</span>
                 </div>
               </CardTitle>
             </div>
