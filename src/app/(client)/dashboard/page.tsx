@@ -265,6 +265,7 @@ function Interviews() {
                     readableSlug={item.readable_slug}
                     interviewer={interviewers[item.interviewer_id.toString()]}
                     viewMode={viewMode}
+                    createdAt={item.created_at}
                   />
                 </div>
               ))}

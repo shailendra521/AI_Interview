@@ -3,7 +3,7 @@ import Image from "next/image";
 import { Card, CardContent, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import { Copy, ArrowUpRight, Mail, Users, Calendar } from "lucide-react";
+import { Copy, ArrowUpRight, Mail, Users, Calendar, MessageSquare } from "lucide-react";
 import { CopyCheck } from "lucide-react";
 import { ResponseService } from "@/services/responses.service";
 import axios from "axios";
@@ -19,17 +19,27 @@ interface Props {
   readableSlug: string;
   interviewer?: any;
   viewMode?: "grid" | "list";
+  createdAt?: string;
 }
 
 const base_url = process.env.NEXT_PUBLIC_LIVE_URL;
 
-function InterviewCard({ name, interviewerId, id, url, readableSlug, interviewer, viewMode = "grid" }: Props) {
+function InterviewCard({ 
+  name, 
+  interviewerId, 
+  id, 
+  url, 
+  readableSlug, 
+  interviewer, 
+  viewMode = "grid",
+  createdAt: initialCreatedAt
+}: Props) {
   const [copied, setCopied] = useState(false);
   const [responseCount, setResponseCount] = useState<number | null>(null);
   const [isFetching, setIsFetching] = useState(false);
   const [img, setImg] = useState("");
   const [isEmailPopupOpen, setIsEmailPopupOpen] = useState(false);
-  const [createdAt, setCreatedAt] = useState<string>("");
+  const [createdAt, setCreatedAt] = useState<string>(initialCreatedAt || "");
 
   useEffect(() => {
     // If interviewer is provided, use it directly
@@ -59,8 +69,19 @@ function InterviewCard({ name, interviewerId, id, url, readableSlug, interviewer
         const responses = await ResponseService.getAllResponses(id);
         setResponseCount(responses.length);
         
-        // Set creation date (mock data - would be replaced with actual data)
-        setCreatedAt(new Date(Date.now() - Math.random() * 30 * 24 * 60 * 60 * 1000).toISOString());
+        // Remove mock date creation
+        if (!initialCreatedAt) {
+          // If createdAt wasn't provided in props, fetch it from the interview data
+          try {
+            const response = await fetch(`/api/interviews/${id}`);
+            if (response.ok) {
+              const data = await response.json();
+              setCreatedAt(data.created_at);
+            }
+          } catch (error) {
+            console.error("Failed to fetch interview creation date:", error);
+          }
+        }
         
         if (responses.length > 0) {
           setIsFetching(true);
@@ -90,8 +111,7 @@ function InterviewCard({ name, interviewerId, id, url, readableSlug, interviewer
     };
 
     fetchResponses();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [id, initialCreatedAt]);
 
   const copyToClipboard = () => {
     navigator.clipboard
@@ -244,17 +264,20 @@ function InterviewCard({ name, interviewerId, id, url, readableSlug, interviewer
     <>
       <a
         href={`/interviews/${id}`}
+        className="block group"
         style={{
           pointerEvents: isFetching ? "none" : "auto",
           cursor: isFetching ? "default" : "pointer",
         }}
       >
         <Card 
-          className={`relative p-0 h-64 w-64 rounded-xl shrink-0 overflow-hidden border-slate-200 hover:shadow-md transition-all duration-300 ${isFetching ? "opacity-80" : ""}`}
+          className={`relative h-full overflow-hidden hover:shadow-lg transition-all duration-300 bg-gradient-to-br from-white to-slate-50 border border-slate-200 ${isFetching ? "opacity-80" : ""}`}
         >
           <CardContent className="p-0 h-full flex flex-col">
-            <div className="w-full h-32 overflow-hidden bg-gradient-to-r from-primary to-blue-500 flex items-center justify-center relative">
-              <CardTitle className="text-white text-xl font-bold px-4 text-center">
+            <div className="w-full h-32 overflow-hidden bg-gradient-to-br from-primary/90 via-primary/85 to-primary/80 flex items-center justify-center relative">
+              <div className="absolute inset-0 bg-[url('/grid-pattern.svg')] opacity-25"></div>
+              <div className="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent mix-blend-soft-light"></div>
+              <CardTitle className="text-white text-xl font-bold px-6 text-center relative">
                 {name}
                 {isFetching && (
                   <div className="mt-2">
@@ -262,11 +285,19 @@ function InterviewCard({ name, interviewerId, id, url, readableSlug, interviewer
                   </div>
                 )}
               </CardTitle>
+              <Button
+                className="absolute top-3 right-3 h-8 w-8 rounded-full p-0 bg-white/20 text-white hover:bg-white/30"
+                variant="ghost"
+                onClick={handleJumpToInterview}
+              >
+                <ArrowUpRight size={16} />
+              </Button>
             </div>
-            <div className="flex-1 p-4">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <div className="w-10 h-10 rounded-full overflow-hidden border-2 border-white shadow-sm">
+
+            <div className="flex-1 p-5">
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-full overflow-hidden border-2 border-white shadow-md">
                     <Image
                       src={img || "/default-avatar.png"}
                       alt="Interviewer"
@@ -275,45 +306,47 @@ function InterviewCard({ name, interviewerId, id, url, readableSlug, interviewer
                       className="object-cover object-center"
                     />
                   </div>
-                  <div className="text-sm font-medium text-slate-800">
-                    {interviewer?.name || "Interviewer"}
+                  <div>
+                    <div className="text-sm font-medium text-slate-800">
+                      {interviewer?.name || "Interviewer"}
+                    </div>
+                    <div className="text-xs text-slate-500 mt-0.5">
+                      {createdAt ? formatDistanceToNow(new Date(createdAt), { addSuffix: true }) : "Recently"}
+                    </div>
                   </div>
                 </div>
-                <div className="text-sm font-medium bg-blue-50 text-primary rounded-full px-2.5 py-1">
-                  {responseCount || 0} <span className="text-xs">Responses</span>
+                <div className="flex items-center gap-1 bg-primary/10 text-primary rounded-full px-3 py-1.5">
+                  <MessageSquare size={14} />
+                  <span className="text-sm font-medium">{responseCount || 0}</span>
                 </div>
               </div>
               
-              <div className="flex gap-2 mt-4">
+              <div className="flex gap-2">
                 <Button
-                  className="flex-1 text-xs gap-1.5 h-9"
-                  variant="soft"
+                  className="flex-1 h-9 bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 hover:text-slate-900"
                   onClick={handleEmailClick}
                 >
-                  <Mail size={14} /> Share
+                  <Mail size={14} className="mr-1.5" /> Share
                 </Button>
                 <Button
-                  className={`flex-1 text-xs gap-1.5 h-9 ${copied ? "bg-primary text-white" : ""}`}
-                  variant="subtle"
-                  onClick={(event) => {
-                    event.stopPropagation();
-                    event.preventDefault();
+                  className={`flex-1 h-9 ${copied ? "bg-primary text-white" : "bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 hover:text-slate-900"}`}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
                     copyToClipboard();
                   }}
                 >
-                  {copied ? <CopyCheck size={14} /> : <Copy size={14} />} Copy
+                  {copied ? (
+                    <>
+                      <CopyCheck size={14} className="mr-1.5" /> Copied
+                    </>
+                  ) : (
+                    <>
+                      <Copy size={14} className="mr-1.5" /> Copy Link
+                    </>
+                  )}
                 </Button>
               </div>
-            </div>
-            
-            <div className="absolute top-3 right-3">
-              <Button
-                className="h-7 w-7 rounded-full p-0 bg-white/20 text-white hover:bg-white/30"
-                variant="ghost"
-                onClick={handleJumpToInterview}
-              >
-                <ArrowUpRight size={14} />
-              </Button>
             </div>
           </CardContent>
         </Card>
